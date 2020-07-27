@@ -1876,7 +1876,7 @@ domexception@^2.0.1:
   dependencies:
     webidl-conversions "^5.0.0"
 
-"dotfiles@file:../dotfiles":
+dotfiles@../dotfiles:
   version "1.0.0"
 
 ecc-jsbn@~0.1.1:
