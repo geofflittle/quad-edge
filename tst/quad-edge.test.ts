@@ -7,8 +7,8 @@ import {
     edgeToString,
     makeEdge,
     polygon,
-    polygon2,
-    splice
+    splice,
+    swap
 } from "../src/quad-edge"
 
 import { makePoint2D } from "../src/point-2d"
@@ -292,32 +292,20 @@ describe("makeEdge", () => {
     })
 })
 
+describe("splice", () => {
+    it("makes a line", () => {
+        const a = makeEdge(0, 1)
+        const b = makeEdge(2, 3)
+        splice(a, b)
+        verifyLine(a.sym, b)
+    })
+})
+
 describe("addEdge", () => {
     it("makes a line", () => {
         const e_0 = makeEdge(0, 1)
         const e_1 = addEdge(e_0, 2)
         verifyLine(e_0, e_1)
-    })
-})
-
-describe("deleteEdge", () => {
-    it("makes two isolated edges from a loop", () => {
-        const loopEdgeRef = polygon(2)
-        const otherEdgeRef = loopEdgeRef.lnext
-        deleteEdge(otherEdgeRef)
-
-        verifyIsolatedEdge(loopEdgeRef)
-        verifyIsolatedEdge(otherEdgeRef)
-    })
-
-    it("makes an isolated edge and line from a triangle", () => {
-        const a = polygon(3)
-        const b = a.lnext
-        const c = b.lnext
-        deleteEdge(c)
-
-        verifyIsolatedEdge(c)
-        verifyLine(a, b)
     })
 })
 
@@ -350,3 +338,42 @@ describe("polygon", () => {
         verifySquare(squareEdgeRef)
     })
 })
+
+describe("deleteEdge", () => {
+    it("makes two isolated edges from a loop", () => {
+        const loopEdgeRef = polygon(2)
+        const otherEdgeRef = loopEdgeRef.lnext
+        deleteEdge(otherEdgeRef)
+
+        verifyIsolatedEdge(loopEdgeRef)
+        verifyIsolatedEdge(otherEdgeRef)
+    })
+
+    it("makes an isolated edge and line from a triangle", () => {
+        const a = polygon(3)
+        const b = a.lnext
+        const c = b.lnext
+        deleteEdge(c)
+
+        verifyIsolatedEdge(c)
+        verifyLine(a, b)
+    })
+})
+
+// describe("swap", () => {
+//     it("rotates an edge within its quadrilateral", () => {
+//         const a = polygon(4)
+//         const b = a.lnext
+//         const c = b.lnext
+//         const d = c.lnext
+//         const e = connect(a, c.sym)
+
+//         console.log({ a: edgeToString(a) })
+//         console.log({ b: edgeToString(b) })
+//         console.log({ c: edgeToString(c) })
+//         console.log({ d: edgeToString(d) })
+//         console.log({ e: edgeToString(e) })
+
+//         // swap(e)
+//     })
+// })

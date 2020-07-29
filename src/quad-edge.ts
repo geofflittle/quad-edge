@@ -1,6 +1,5 @@
 import { Point2D, makeLine } from "./point-2d"
 
-import { generateId } from "ts-core"
 import * as util from "util"
 
 const EPS = 0.001
@@ -28,6 +27,9 @@ export interface Edge<T> {
 }
 
 export type QuadEdge<T> = [Edge<T>, Edge<T>, Edge<T>, Edge<T>]
+
+let id = 0
+const generateId = () => (id++).toString(16).padStart(3, "0")
 
 /*
 
@@ -249,26 +251,6 @@ export const addEdge = <T>(e_0: Edge<T>, t: T) => {
 }
 
 /**
- * Removes an edge from its structure.  For example, removing an edge from a
- * triangle results in an isolated edge and a 3-edged line.  It does not
- * "re-sew" the edges together that the removed edge used to connect.
- */
-export const deleteEdge = <T>(e: Edge<T>) => {
-    splice(e, e.oprev)
-    splice(e.sym, e.sym.oprev)
-}
-
-// export const subdivision = <T>(a: T, b: T, c: T) => {
-//     const e_a = makeEdge(a, b)
-//     const e_b = makeEdge(b, c)
-//     const e_c = makeEdge(c, a)
-//     splice(e_a.sym, e_b)
-//     splice(e_b.sym, e_c)
-//     splice(e_c.sym, e_a)
-//     return e_a
-// }
-
-/**
  * Add a new edge e connecting the destination of a to the origin of b, in such
  * a way that all three have the same left face after the connection is
  * complete.
@@ -293,16 +275,36 @@ export const polygon = (n: number) => {
     return first
 }
 
-// export const swap = <T>(e: Edge<T>) => {
-//     const a = e.oprev
-//     const b = e.sym.oprev
-//     splice(e, a)
-//     splice(e.sym, b)
-//     splice(e, a.lnext)
-//     splice(e.sym, b.lnext)
-//     e.org = a.dest
-//     e.dest = b.dest
+/**
+ * Removes an edge from its structure.  For example, removing an edge from a
+ * triangle results in an isolated edge and a 3-edged line.  It does not
+ * "re-sew" the edges together that the removed edge used to connect.
+ */
+export const deleteEdge = <T>(e: Edge<T>) => {
+    splice(e, e.oprev)
+    splice(e.sym, e.sym.oprev)
+}
+
+// export const subdivision = <T>(a: T, b: T, c: T) => {
+//     const e_a = makeEdge(a, b)
+//     const e_b = makeEdge(b, c)
+//     const e_c = makeEdge(c, a)
+//     splice(e_a.sym, e_b)
+//     splice(e_b.sym, e_c)
+//     splice(e_c.sym, e_a)
+//     return e_a
 // }
+
+export const swap = <T>(e: Edge<T>) => {
+    const a = e.oprev
+    const b = e.sym.oprev
+    splice(e, a)
+    splice(e.sym, b)
+    splice(e, a.lnext)
+    splice(e.sym, b.lnext)
+    e.org = a.dest
+    e.dest = b.dest
+}
 
 // // double the area defined by a, b, and c
 // export const triArea = (a: Point2D, b: Point2D, c: Point2D) => (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)
