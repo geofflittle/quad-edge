@@ -7,6 +7,7 @@ import {
     edgeToString,
     makeEdge,
     polygon,
+    setIdSeed,
     splice,
     swap
 } from "../src/quad-edge"
@@ -54,236 +55,266 @@ const verifyIsolatedEdge = <T>(e_0: Edge<T>) => {
     // TODO: Add orbits
 }
 
-const verifyLine = <T>(e_0: Edge<T>, e_1: Edge<T>) => {
+const verifyLine = <T>(a: Edge<T>, b: Edge<T>) => {
     // e_0 has no onext, e_1 has e_0's sym as onext
-    expect(e_0.onext.id).toEqual(e_0.id)
-    expect(e_1.onext.id).toEqual(e_0.sym.id)
+    expect(a.onext.id).toEqual(a.id)
+    expect(b.onext.id).toEqual(a.sym.id)
 
     // e_0 has no oprev, e_1 has e_0's sym as oprev
-    expect(e_0.oprev.id).toEqual(e_0.id)
-    expect(e_1.oprev.id).toEqual(e_0.sym.id)
+    expect(a.oprev.id).toEqual(a.id)
+    expect(b.oprev.id).toEqual(a.sym.id)
 
     // e_0 has e_1's sym as dnext, e_1 has no dnext
-    expect(e_0.dnext.id).toEqual(e_1.sym.id)
-    expect(e_1.dnext.id).toEqual(e_1.id)
+    expect(a.dnext.id).toEqual(b.sym.id)
+    expect(b.dnext.id).toEqual(b.id)
 
     // e_0 has e_1's sym as dprev, e_1 has no dprev
-    expect(e_0.dprev.id).toEqual(e_1.sym.id)
-    expect(e_1.dprev.id).toEqual(e_1.id)
+    expect(a.dprev.id).toEqual(b.sym.id)
+    expect(b.dprev.id).toEqual(b.id)
 
     // e_0 has e_1 as lnext, e_1 has e_1's sym as lnrxt
-    expect(e_0.lnext.id).toEqual(e_1.id)
-    expect(e_1.lnext.id).toEqual(e_1.sym.id)
+    expect(a.lnext.id).toEqual(b.id)
+    expect(b.lnext.id).toEqual(b.sym.id)
 
     // e_0 has e_1's sym as lprev, e_1 has e_0 as lprev
-    expect(e_0.lprev.id).toEqual(e_0.sym.id)
-    expect(e_1.lprev.id).toEqual(e_0.id)
+    expect(a.lprev.id).toEqual(a.sym.id)
+    expect(b.lprev.id).toEqual(a.id)
 
     // e_0 has e_0's sym as rnext, e_1 has e_0 as rnext
-    expect(e_0.rnext.id).toEqual(e_0.sym.id)
-    expect(e_1.rnext.id).toEqual(e_0.id)
+    expect(a.rnext.id).toEqual(a.sym.id)
+    expect(b.rnext.id).toEqual(a.id)
 
     // e_0 has e_1 as rprev, e_1 has e_1's sym as rprev
-    expect(e_0.rprev.id).toEqual(e_1.id)
-    expect(e_1.rprev.id).toEqual(e_1.sym.id)
+    expect(a.rprev.id).toEqual(b.id)
+    expect(b.rprev.id).toEqual(b.sym.id)
 }
 
-const verifyLoop = <T>(loopEdgeRef: Edge<T>) => {
-    const e_a = loopEdgeRef
-    const e_b = e_a.lnext
+const verifyCorner = <T>(a: Edge<T>, b: Edge<T>, c: Edge<T>) => {
+    // verify onexts
+    expect(a.onext.id).toEqual(b.id)
+    expect(b.onext.id).toEqual(c.id)
+    expect(c.onext.id).toEqual(a.id)
 
+    // verify oprevs
+    expect(a.oprev.id).toEqual(c.id)
+    expect(b.oprev.id).toEqual(a.id)
+    expect(c.oprev.id).toEqual(b.id)
+
+    // verify dnexts
+    expect(a.dnext.id).toEqual(a.id)
+    expect(b.dnext.id).toEqual(b.id)
+    expect(c.dnext.id).toEqual(c.id)
+
+    // verify dprev
+    expect(a.dprev.id).toEqual(a.id)
+    expect(b.dprev.id).toEqual(b.id)
+    expect(c.dprev.id).toEqual(c.id)
+
+    // verify lnext
+    expect(a.lnext.id).toEqual(a.sym.id)
+    expect(b.lnext.id).toEqual(b.sym.id)
+    expect(c.lnext.id).toEqual(c.sym.id)
+
+    // verify lprev
+    expect(a.lprev.id).toEqual(b.sym.id)
+    expect(b.lprev.id).toEqual(c.sym.id)
+    expect(c.lprev.id).toEqual(a.sym.id)
+
+    // verify rnext
+    expect(a.rnext.id).toEqual(c.sym.id)
+    expect(b.rnext.id).toEqual(a.sym.id)
+    expect(c.rnext.id).toEqual(b.sym.id)
+
+    // verify rprev
+    expect(a.rprev.id).toEqual(a.sym.id)
+    expect(b.rprev.id).toEqual(b.sym.id)
+    expect(c.rprev.id).toEqual(c.sym.id)
+}
+
+const verifyLoop = <T>(a: Edge<T>, b: Edge<T>) => {
     // onext relationships
-    expect(e_a.onext.id).toEqual(e_b.sym.id)
-    expect(e_b.onext.id).toEqual(e_a.sym.id)
+    expect(a.onext.id).toEqual(b.sym.id)
+    expect(b.onext.id).toEqual(a.sym.id)
 
     // oprev relationships
-    expect(e_a.oprev.id).toEqual(e_b.sym.id)
-    expect(e_b.oprev.id).toEqual(e_a.sym.id)
+    expect(a.oprev.id).toEqual(b.sym.id)
+    expect(b.oprev.id).toEqual(a.sym.id)
 
     // dnext relationships
-    expect(e_a.dnext.id).toEqual(e_b.sym.id)
-    expect(e_b.dnext.id).toEqual(e_a.sym.id)
+    expect(a.dnext.id).toEqual(b.sym.id)
+    expect(b.dnext.id).toEqual(a.sym.id)
 
     // dprev relationships
-    expect(e_a.dprev.id).toEqual(e_b.sym.id)
-    expect(e_b.dprev.id).toEqual(e_a.sym.id)
+    expect(a.dprev.id).toEqual(b.sym.id)
+    expect(b.dprev.id).toEqual(a.sym.id)
 
     // lnext relationships
-    expect(e_a.lnext.id).toEqual(e_b.id)
-    expect(e_b.lnext.id).toEqual(e_a.id)
+    expect(a.lnext.id).toEqual(b.id)
+    expect(b.lnext.id).toEqual(a.id)
 
     // lprev relationships
-    expect(e_a.lprev.id).toEqual(e_b.id)
-    expect(e_b.lprev.id).toEqual(e_a.id)
+    expect(a.lprev.id).toEqual(b.id)
+    expect(b.lprev.id).toEqual(a.id)
 
     // rnext relationships
-    expect(e_a.rnext.id).toEqual(e_b.id)
-    expect(e_b.rnext.id).toEqual(e_a.id)
+    expect(a.rnext.id).toEqual(b.id)
+    expect(b.rnext.id).toEqual(a.id)
 
     // rprev relationships
-    expect(e_a.rprev.id).toEqual(e_b.id)
-    expect(e_b.rprev.id).toEqual(e_a.id)
+    expect(a.rprev.id).toEqual(b.id)
+    expect(b.rprev.id).toEqual(a.id)
 
     // oorbit relationships
-    expect(e_a.oorbit.map((e) => e.id)).toEqual([e_a.id, e_b.sym.id])
-    expect(e_b.oorbit.map((e) => e.id)).toEqual([e_b.id, e_a.sym.id])
+    expect(a.oorbit.map((e) => e.id)).toEqual([a.id, b.sym.id])
+    expect(b.oorbit.map((e) => e.id)).toEqual([b.id, a.sym.id])
 
     // dorbit relationships
-    expect(e_a.dorbit.map((e) => e.id)).toEqual([e_a.id, e_b.sym.id])
-    expect(e_b.dorbit.map((e) => e.id)).toEqual([e_b.id, e_a.sym.id])
+    expect(a.dorbit.map((e) => e.id)).toEqual([a.id, b.sym.id])
+    expect(b.dorbit.map((e) => e.id)).toEqual([b.id, a.sym.id])
 
     // lorbit relationships
-    expect(e_a.lorbit.map((e) => e.id)).toEqual([e_a.id, e_b.id])
-    expect(e_b.lorbit.map((e) => e.id)).toEqual([e_b.id, e_a.id])
+    expect(a.lorbit.map((e) => e.id)).toEqual([a.id, b.id])
+    expect(b.lorbit.map((e) => e.id)).toEqual([b.id, a.id])
 
     // rorbit relationships
-    expect(e_a.rorbit.map((e) => e.id)).toEqual([e_a.id, e_b.id])
-    expect(e_b.rorbit.map((e) => e.id)).toEqual([e_b.id, e_a.id])
+    expect(a.rorbit.map((e) => e.id)).toEqual([a.id, b.id])
+    expect(b.rorbit.map((e) => e.id)).toEqual([b.id, a.id])
 }
 
-const verifyTriangle = <T>(triangleEdgeRef: Edge<T>) => {
-    const e_a = triangleEdgeRef
-    const e_b = e_a.lnext
-    const e_c = e_b.lnext
-
+const verifyTriangle = <T>(a: Edge<T>, b: Edge<T>, c: Edge<T>) => {
     // onext relationships
-    expect(e_a.onext.id).toEqual(e_c.sym.id)
-    expect(e_b.onext.id).toEqual(e_a.sym.id)
-    expect(e_c.onext.id).toEqual(e_b.sym.id)
+    expect(a.onext.id).toEqual(c.sym.id)
+    expect(b.onext.id).toEqual(a.sym.id)
+    expect(c.onext.id).toEqual(b.sym.id)
 
     // oprev relationships
-    expect(e_a.oprev.id).toEqual(e_c.sym.id)
-    expect(e_b.oprev.id).toEqual(e_a.sym.id)
-    expect(e_c.oprev.id).toEqual(e_b.sym.id)
+    expect(a.oprev.id).toEqual(c.sym.id)
+    expect(b.oprev.id).toEqual(a.sym.id)
+    expect(c.oprev.id).toEqual(b.sym.id)
 
     // dnext relationships
-    expect(e_a.dnext.id).toEqual(e_b.sym.id)
-    expect(e_b.dnext.id).toEqual(e_c.sym.id)
-    expect(e_c.dnext.id).toEqual(e_a.sym.id)
+    expect(a.dnext.id).toEqual(b.sym.id)
+    expect(b.dnext.id).toEqual(c.sym.id)
+    expect(c.dnext.id).toEqual(a.sym.id)
 
     // dprev relationships
-    expect(e_a.dprev.id).toEqual(e_b.sym.id)
-    expect(e_b.dprev.id).toEqual(e_c.sym.id)
-    expect(e_c.dprev.id).toEqual(e_a.sym.id)
+    expect(a.dprev.id).toEqual(b.sym.id)
+    expect(b.dprev.id).toEqual(c.sym.id)
+    expect(c.dprev.id).toEqual(a.sym.id)
 
     // lnext relationships
-    expect(e_a.lnext.id).toEqual(e_b.id)
-    expect(e_b.lnext.id).toEqual(e_c.id)
-    expect(e_c.lnext.id).toEqual(e_a.id)
+    expect(a.lnext.id).toEqual(b.id)
+    expect(b.lnext.id).toEqual(c.id)
+    expect(c.lnext.id).toEqual(a.id)
 
     // lprev relationships
-    expect(e_a.lprev.id).toEqual(e_c.id)
-    expect(e_b.lprev.id).toEqual(e_a.id)
-    expect(e_c.lprev.id).toEqual(e_b.id)
+    expect(a.lprev.id).toEqual(c.id)
+    expect(b.lprev.id).toEqual(a.id)
+    expect(c.lprev.id).toEqual(b.id)
 
     // rnext relationships
-    expect(e_a.rnext.id).toEqual(e_c.id)
-    expect(e_b.rnext.id).toEqual(e_a.id)
-    expect(e_c.rnext.id).toEqual(e_b.id)
+    expect(a.rnext.id).toEqual(c.id)
+    expect(b.rnext.id).toEqual(a.id)
+    expect(c.rnext.id).toEqual(b.id)
 
     // rprev relationships
-    expect(e_a.rprev.id).toEqual(e_b.id)
-    expect(e_b.rprev.id).toEqual(e_c.id)
-    expect(e_c.rprev.id).toEqual(e_a.id)
+    expect(a.rprev.id).toEqual(b.id)
+    expect(b.rprev.id).toEqual(c.id)
+    expect(c.rprev.id).toEqual(a.id)
 
     // oorbit relationships
-    expect(e_a.oorbit.map((e) => e.id)).toEqual([e_a.id, e_c.sym.id])
-    expect(e_b.oorbit.map((e) => e.id)).toEqual([e_b.id, e_a.sym.id])
-    expect(e_c.oorbit.map((e) => e.id)).toEqual([e_c.id, e_b.sym.id])
+    expect(a.oorbit.map((e) => e.id)).toEqual([a.id, c.sym.id])
+    expect(b.oorbit.map((e) => e.id)).toEqual([b.id, a.sym.id])
+    expect(c.oorbit.map((e) => e.id)).toEqual([c.id, b.sym.id])
 
     // dorbit relationships
-    expect(e_a.dorbit.map((e) => e.id)).toEqual([e_a.id, e_b.sym.id])
-    expect(e_b.dorbit.map((e) => e.id)).toEqual([e_b.id, e_c.sym.id])
-    expect(e_c.dorbit.map((e) => e.id)).toEqual([e_c.id, e_a.sym.id])
+    expect(a.dorbit.map((e) => e.id)).toEqual([a.id, b.sym.id])
+    expect(b.dorbit.map((e) => e.id)).toEqual([b.id, c.sym.id])
+    expect(c.dorbit.map((e) => e.id)).toEqual([c.id, a.sym.id])
 
     // lorbit relationships
-    expect(e_a.lorbit.map((e) => e.id)).toEqual([e_a.id, e_b.id, e_c.id])
-    expect(e_b.lorbit.map((e) => e.id)).toEqual([e_b.id, e_c.id, e_a.id])
-    expect(e_c.lorbit.map((e) => e.id)).toEqual([e_c.id, e_a.id, e_b.id])
+    expect(a.lorbit.map((e) => e.id)).toEqual([a.id, b.id, c.id])
+    expect(b.lorbit.map((e) => e.id)).toEqual([b.id, c.id, a.id])
+    expect(c.lorbit.map((e) => e.id)).toEqual([c.id, a.id, b.id])
 
     // rorbit relationships
-    expect(e_a.rorbit.map((e) => e.id)).toEqual([e_a.id, e_c.id, e_b.id])
-    expect(e_b.rorbit.map((e) => e.id)).toEqual([e_b.id, e_a.id, e_c.id])
-    expect(e_c.rorbit.map((e) => e.id)).toEqual([e_c.id, e_b.id, e_a.id])
+    expect(a.rorbit.map((e) => e.id)).toEqual([a.id, c.id, b.id])
+    expect(b.rorbit.map((e) => e.id)).toEqual([b.id, a.id, c.id])
+    expect(c.rorbit.map((e) => e.id)).toEqual([c.id, b.id, a.id])
 }
 
-const verifySquare = <T>(squareEdgeRef: Edge<T>) => {
-    const e_a = squareEdgeRef
-    const e_b = e_a.lnext
-    const e_c = e_b.lnext
-    const e_d = e_c.lnext
-
+const verifySquare = <T>(a: Edge<T>, b: Edge<T>, c: Edge<T>, d: Edge<T>) => {
     // onext relationships
-    expect(e_a.onext.id).toEqual(e_d.sym.id)
-    expect(e_b.onext.id).toEqual(e_a.sym.id)
-    expect(e_c.onext.id).toEqual(e_b.sym.id)
-    expect(e_d.onext.id).toEqual(e_c.sym.id)
+    expect(a.onext.id).toEqual(d.sym.id)
+    expect(b.onext.id).toEqual(a.sym.id)
+    expect(c.onext.id).toEqual(b.sym.id)
+    expect(d.onext.id).toEqual(c.sym.id)
 
     // oprev relationships
-    expect(e_a.oprev.id).toEqual(e_d.sym.id)
-    expect(e_b.oprev.id).toEqual(e_a.sym.id)
-    expect(e_c.oprev.id).toEqual(e_b.sym.id)
-    expect(e_d.oprev.id).toEqual(e_c.sym.id)
+    expect(a.oprev.id).toEqual(d.sym.id)
+    expect(b.oprev.id).toEqual(a.sym.id)
+    expect(c.oprev.id).toEqual(b.sym.id)
+    expect(d.oprev.id).toEqual(c.sym.id)
 
     // dnext relationships
-    expect(e_a.dnext.id).toEqual(e_b.sym.id)
-    expect(e_b.dnext.id).toEqual(e_c.sym.id)
-    expect(e_c.dnext.id).toEqual(e_d.sym.id)
-    expect(e_d.dnext.id).toEqual(e_a.sym.id)
+    expect(a.dnext.id).toEqual(b.sym.id)
+    expect(b.dnext.id).toEqual(c.sym.id)
+    expect(c.dnext.id).toEqual(d.sym.id)
+    expect(d.dnext.id).toEqual(a.sym.id)
 
     // dprev relationships
-    expect(e_a.dprev.id).toEqual(e_b.sym.id)
-    expect(e_b.dprev.id).toEqual(e_c.sym.id)
-    expect(e_c.dprev.id).toEqual(e_d.sym.id)
-    expect(e_d.dprev.id).toEqual(e_a.sym.id)
+    expect(a.dprev.id).toEqual(b.sym.id)
+    expect(b.dprev.id).toEqual(c.sym.id)
+    expect(c.dprev.id).toEqual(d.sym.id)
+    expect(d.dprev.id).toEqual(a.sym.id)
 
     // lnext relationships"
-    expect(e_a.lnext.id).toEqual(e_b.id)
-    expect(e_b.lnext.id).toEqual(e_c.id)
-    expect(e_c.lnext.id).toEqual(e_d.id)
-    expect(e_d.lnext.id).toEqual(e_a.id)
+    expect(a.lnext.id).toEqual(b.id)
+    expect(b.lnext.id).toEqual(c.id)
+    expect(c.lnext.id).toEqual(d.id)
+    expect(d.lnext.id).toEqual(a.id)
 
     // lprev relationships
-    expect(e_a.lprev.id).toEqual(e_d.id)
-    expect(e_b.lprev.id).toEqual(e_a.id)
-    expect(e_c.lprev.id).toEqual(e_b.id)
-    expect(e_d.lprev.id).toEqual(e_c.id)
+    expect(a.lprev.id).toEqual(d.id)
+    expect(b.lprev.id).toEqual(a.id)
+    expect(c.lprev.id).toEqual(b.id)
+    expect(d.lprev.id).toEqual(c.id)
 
     // rnext relationships
-    expect(e_a.rnext.id).toEqual(e_d.id)
-    expect(e_b.rnext.id).toEqual(e_a.id)
-    expect(e_c.rnext.id).toEqual(e_b.id)
-    expect(e_d.rnext.id).toEqual(e_c.id)
+    expect(a.rnext.id).toEqual(d.id)
+    expect(b.rnext.id).toEqual(a.id)
+    expect(c.rnext.id).toEqual(b.id)
+    expect(d.rnext.id).toEqual(c.id)
 
     // rprev relationships
-    expect(e_a.rprev.id).toEqual(e_b.id)
-    expect(e_b.rprev.id).toEqual(e_c.id)
-    expect(e_c.rprev.id).toEqual(e_d.id)
-    expect(e_d.rprev.id).toEqual(e_a.id)
+    expect(a.rprev.id).toEqual(b.id)
+    expect(b.rprev.id).toEqual(c.id)
+    expect(c.rprev.id).toEqual(d.id)
+    expect(d.rprev.id).toEqual(a.id)
 
     // oorbit relationships
-    expect(e_a.oorbit.map((e) => e.id)).toEqual([e_a.id, e_d.sym.id])
-    expect(e_b.oorbit.map((e) => e.id)).toEqual([e_b.id, e_a.sym.id])
-    expect(e_c.oorbit.map((e) => e.id)).toEqual([e_c.id, e_b.sym.id])
-    expect(e_d.oorbit.map((e) => e.id)).toEqual([e_d.id, e_c.sym.id])
+    expect(a.oorbit.map((e) => e.id)).toEqual([a.id, d.sym.id])
+    expect(b.oorbit.map((e) => e.id)).toEqual([b.id, a.sym.id])
+    expect(c.oorbit.map((e) => e.id)).toEqual([c.id, b.sym.id])
+    expect(d.oorbit.map((e) => e.id)).toEqual([d.id, c.sym.id])
 
     // dorbit relationships
-    expect(e_a.dorbit.map((e) => e.id)).toEqual([e_a.id, e_b.sym.id])
-    expect(e_b.dorbit.map((e) => e.id)).toEqual([e_b.id, e_c.sym.id])
-    expect(e_c.dorbit.map((e) => e.id)).toEqual([e_c.id, e_d.sym.id])
-    expect(e_d.dorbit.map((e) => e.id)).toEqual([e_d.id, e_a.sym.id])
+    expect(a.dorbit.map((e) => e.id)).toEqual([a.id, b.sym.id])
+    expect(b.dorbit.map((e) => e.id)).toEqual([b.id, c.sym.id])
+    expect(c.dorbit.map((e) => e.id)).toEqual([c.id, d.sym.id])
+    expect(d.dorbit.map((e) => e.id)).toEqual([d.id, a.sym.id])
 
     // lorbit relationships
-    expect(e_a.lorbit.map((e) => e.id)).toEqual([e_a.id, e_b.id, e_c.id, e_d.id])
-    expect(e_b.lorbit.map((e) => e.id)).toEqual([e_b.id, e_c.id, e_d.id, e_a.id])
-    expect(e_c.lorbit.map((e) => e.id)).toEqual([e_c.id, e_d.id, e_a.id, e_b.id])
-    expect(e_d.lorbit.map((e) => e.id)).toEqual([e_d.id, e_a.id, e_b.id, e_c.id])
+    expect(a.lorbit.map((e) => e.id)).toEqual([a.id, b.id, c.id, d.id])
+    expect(b.lorbit.map((e) => e.id)).toEqual([b.id, c.id, d.id, a.id])
+    expect(c.lorbit.map((e) => e.id)).toEqual([c.id, d.id, a.id, b.id])
+    expect(d.lorbit.map((e) => e.id)).toEqual([d.id, a.id, b.id, c.id])
 
     // rorbit relationships
-    expect(e_a.rorbit.map((e) => e.id)).toEqual([e_a.id, e_d.id, e_c.id, e_b.id])
-    expect(e_b.rorbit.map((e) => e.id)).toEqual([e_b.id, e_a.id, e_d.id, e_c.id])
-    expect(e_c.rorbit.map((e) => e.id)).toEqual([e_c.id, e_b.id, e_a.id, e_d.id])
-    expect(e_d.rorbit.map((e) => e.id)).toEqual([e_d.id, e_c.id, e_b.id, e_a.id])
+    expect(a.rorbit.map((e) => e.id)).toEqual([a.id, d.id, c.id, b.id])
+    expect(b.rorbit.map((e) => e.id)).toEqual([b.id, a.id, d.id, c.id])
+    expect(c.rorbit.map((e) => e.id)).toEqual([c.id, b.id, a.id, d.id])
+    expect(d.rorbit.map((e) => e.id)).toEqual([d.id, c.id, b.id, a.id])
 }
 
 describe("makeEdge", () => {
@@ -297,15 +328,26 @@ describe("splice", () => {
         const a = makeEdge(0, 1)
         const b = makeEdge(2, 3)
         splice(a, b)
+
         verifyLine(a.sym, b)
+    })
+
+    it("makes a corner", () => {
+        const a = makeEdge(0, 1)
+        const b = makeEdge(2, 3)
+        const c = makeEdge(4, 5)
+        splice(a, b)
+        splice(b, c)
+
+        verifyCorner(a, b, c)
     })
 })
 
 describe("addEdge", () => {
     it("makes a line", () => {
-        const e_0 = makeEdge(0, 1)
-        const e_1 = addEdge(e_0, 2)
-        verifyLine(e_0, e_1)
+        const a = makeEdge(0, 1)
+        const b = addEdge(a, 2)
+        verifyLine(a, b)
     })
 })
 
@@ -315,38 +357,44 @@ describe("connect", () => {
         const b = addEdge(a, 2)
         const c = connect(b, a)
 
-        verifyTriangle(a)
+        verifyTriangle(a, b, c)
     })
 })
 
 describe("polygon", () => {
     it("makes a 2-edge loop", () => {
-        const loopEdgeRef = polygon(2)
+        const a = polygon(2)
+        const b = a.lnext
 
-        verifyLoop(loopEdgeRef)
+        verifyLoop(a, b)
     })
 
     it("makes a triangle", () => {
-        const triangleEdgeRef = polygon(3)
+        const a = polygon(3)
+        const b = a.lnext
+        const c = b.lnext
 
-        verifyTriangle(triangleEdgeRef)
+        verifyTriangle(a, b, c)
     })
 
     it("makes a square", () => {
-        const squareEdgeRef = polygon(4)
+        const a = polygon(4)
+        const b = a.lnext
+        const c = b.lnext
+        const d = c.lnext
 
-        verifySquare(squareEdgeRef)
+        verifySquare(a, b, c, d)
     })
 })
 
 describe("deleteEdge", () => {
     it("makes two isolated edges from a loop", () => {
-        const loopEdgeRef = polygon(2)
-        const otherEdgeRef = loopEdgeRef.lnext
-        deleteEdge(otherEdgeRef)
+        const a = polygon(2)
+        const b = a.lnext
+        deleteEdge(b)
 
-        verifyIsolatedEdge(loopEdgeRef)
-        verifyIsolatedEdge(otherEdgeRef)
+        verifyIsolatedEdge(a)
+        verifyIsolatedEdge(b)
     })
 
     it("makes an isolated edge and line from a triangle", () => {
@@ -360,20 +408,27 @@ describe("deleteEdge", () => {
     })
 })
 
-// describe("swap", () => {
-//     it("rotates an edge within its quadrilateral", () => {
-//         const a = polygon(4)
-//         const b = a.lnext
-//         const c = b.lnext
-//         const d = c.lnext
-//         const e = connect(a, c.sym)
+describe("swap", () => {
+    it("rotates an edge within its quadrilateral", () => {
+        setIdSeed(1)
+        const a = polygon(4)
+        const b = a.lnext
+        const c = b.lnext
+        const d = c.lnext
+        const e = connect(a, d)
 
-//         console.log({ a: edgeToString(a) })
-//         console.log({ b: edgeToString(b) })
-//         console.log({ c: edgeToString(c) })
-//         console.log({ d: edgeToString(d) })
-//         console.log({ e: edgeToString(e) })
+        // verify the quadrilateral
+        expect(e.oorbit.map((e) => e.id)).toEqual([e.id, a.sym.id, b.id])
+        expect(e.dorbit.map((e) => e.id)).toEqual([e.id, c.id, d.sym.id])
+        expect(e.lorbit.map((e) => e.id)).toEqual([e.id, d.id, a.id])
+        expect(e.rorbit.map((e) => e.id)).toEqual([e.id, b.sym.id, c.sym.id])
 
-//         // swap(e)
-//     })
-// })
+        swap(e)
+
+        // verify the swap
+        expect(e.oorbit.map((e) => e.id)).toEqual([e.id, b.sym.id, c.id])
+        expect(e.dorbit.map((e) => e.id)).toEqual([e.id, d.id, a.sym.id])
+        expect(e.lorbit.map((e) => e.id)).toEqual([e.id, a.id, b.id])
+        expect(e.rorbit.map((e) => e.id)).toEqual([e.id, c.sym.id, d.sym.id])
+    })
+})

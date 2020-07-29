@@ -28,8 +28,12 @@ export interface Edge<T> {
 
 export type QuadEdge<T> = [Edge<T>, Edge<T>, Edge<T>, Edge<T>]
 
+const toBijective = (n: number): string =>
+    (n > 26 ? toBijective(Math.floor((n - 1) / 26)) : "") + ((n % 26 || 26) + 9).toString(36)
+
 let id = 0
-const generateId = () => (id++).toString(16).padStart(3, "0")
+export const setIdSeed = (seed: number) => (id = seed)
+const generateId = () => toBijective(id++).toUpperCase()
 
 /*
 
@@ -170,9 +174,13 @@ export const edgeToString = <T>(e: Edge<T>) => {
         sym: e.sym.id,
         invrot: e.invrot.id,
         onext: e.onext.id,
+        oprev: e.oprev.id,
         dnext: e.dnext.id,
+        dprev: e.dprev.id,
         lnext: e.lnext.id,
-        rnext: e.rnext.id
+        lprev: e.lprev.id,
+        rnext: e.rnext.id,
+        rprev: e.rprev.id
     })
 }
 
