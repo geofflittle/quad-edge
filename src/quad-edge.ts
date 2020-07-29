@@ -1,6 +1,7 @@
 import { Point2D, makeLine } from "./point-2d"
 
 import { generateId } from "ts-core"
+import * as util from "util"
 
 const EPS = 0.001
 
@@ -160,6 +161,19 @@ const edge = <T>(quad: QuadEdge<T>, index: number): Edge<T> => {
     return (onext = e)
 }
 
+export const edgeToString = <T>(e: Edge<T>) => {
+    return JSON.stringify({
+        id: e.id,
+        rot: e.rot.id,
+        sym: e.sym.id,
+        invrot: e.invrot.id,
+        onext: e.onext.id,
+        dnext: e.dnext.id,
+        lnext: e.lnext.id,
+        rnext: e.rnext.id
+    })
+}
+
 export const makeEdge = <T>(org: T, dest: T) => {
     const quad: QuadEdge<T> = <QuadEdge<T>>new Array(4)
     const e_0 = (quad[0] = edge(quad, 0))
@@ -176,12 +190,39 @@ export const makeEdge = <T>(org: T, dest: T) => {
 }
 
 /**
- * Splice takes two edges and concats their edge rings.  If these edges are
- * singular and disjoint, this operation will set each edge's onext and rot's
- * onext to the other.  If these edges are joined and have each other as onexts,
- * this operation will split them so that they are singular.
+ * Splice takes two edges and concats their edge rings.
  *
- * If either of these edges is not singular, splice concats their left faces.
+ * If these edges are singular and disjoint, this operation will set each
+ * edge's onext and rot's onext to the other.
+ *
+ * If these edges are joined and have each other as onexts, this operation will
+ * split them so that they are singular.
+ *
+ * If either of these edges is not singular, splice merges their left faces.
+ *
+ * So for example, imagine a and b are edges in the same onext orbit with left
+ * faces F and G, respectively
+ *
+ *       ^ a
+ *   F   |
+ *       |
+ *  <---- ---->
+ *       |
+ *       |   G
+ *     b v
+ *
+ *   splice(a, b) leads to
+ *
+ *           ^ a
+ *           |
+ *      F=G  |
+ *  <----     ---->
+ *       |
+ *       |
+ *     b v
+ *
+ *   where F and G are now the same face.
+ *
  */
 export const splice = <T>(a: Edge<T>, b: Edge<T>) => {
     const alpha = a.onext.rot
@@ -197,51 +238,59 @@ export const splice = <T>(a: Edge<T>, b: Edge<T>) => {
     beta.onext = t4
 }
 
-export const deleteEdge = <T>(e: Edge<T>) => {
-    splice(e, e.oprev)
-    splice(e.sym, e.sym.oprev)
-}
-
-export const subdivision = <T>(a: T, b: T, c: T) => {
-    const e_a = makeEdge(a, b)
-    const e_b = makeEdge(b, c)
-    const e_c = makeEdge(c, a)
-    splice(e_a.sym, e_b)
-    splice(e_b.sym, e_c)
-    splice(e_c.sym, e_a)
-    return e_a
-}
-
+/**
+ * Makes a new edge and concats its origin to the destination of the provided
+ * edge.
+ */
 export const addEdge = <T>(e_0: Edge<T>, t: T) => {
     const e_1 = makeEdge(e_0.dest, t)
     splice(e_0.sym, e_1)
     return e_1
 }
 
-export const polygon = <T>(ts: T[]) => {
-    if (ts.length < 2) {
-        throw new Error()
-    }
-    const first = makeEdge(ts[0], ts[1])
-    const last = ts.slice(1).reduce(addEdge, first)
-    splice(last.sym, first)
-    return first
+/**
+ * Removes an edge from its structure.  For example, removing an edge from a
+ * triangle results in an isolated edge and a 3-edged line.  It does not
+ * "re-sew" the edges together that the removed edge used to connect.
+ */
+export const deleteEdge = <T>(e: Edge<T>) => {
+    splice(e, e.oprev)
+    splice(e.sym, e.sym.oprev)
 }
+
+// export const subdivision = <T>(a: T, b: T, c: T) => {
+//     const e_a = makeEdge(a, b)
+//     const e_b = makeEdge(b, c)
+//     const e_c = makeEdge(c, a)
+//     splice(e_a.sym, e_b)
+//     splice(e_b.sym, e_c)
+//     splice(e_c.sym, e_a)
+//     return e_a
+// }
 
 /**
  * Add a new edge e connecting the destination of a to the origin of b, in such
  * a way that all three have the same left face after the connection is
  * complete.
- * Additionally, the data pointers of the new edge are set.
- *
- * @param a
- * @param b
  */
 export const connect = <T>(a: Edge<T>, b: Edge<T>) => {
     const e = makeEdge(a.dest, b.org)
     splice(e, a.lnext)
     splice(e.sym, b)
     return e
+}
+
+/**
+ * Makes a polygon.
+ */
+export const polygon = (n: number) => {
+    if (n < 2) {
+        throw new Error()
+    }
+    const first = makeEdge(0, 1)
+    const last = [...new Array(n - 2).keys()].reduce(addEdge, first)
+    connect(last, first)
+    return first
 }
 
 // export const swap = <T>(e: Edge<T>) => {
