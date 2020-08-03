@@ -7,7 +7,7 @@
     "scripts": {
         "lint": "eslint --fix --max-warnings 0 '**/*.{js,ts}'",
         "format": "prettier --write '**/*.{md,js,json,ts,yaml}'",
-        "test": "jest tst/quad-edges.test.ts",
+        "test": "jest tst/quad-edge-2.test.ts",
         "integ": "parcel assets/index.html",
         "build": "tsc"
     },

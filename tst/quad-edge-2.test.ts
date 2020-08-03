@@ -200,21 +200,15 @@ describe("set odata", () => {
         const b = bag.createEdge()
         const c = bag.createEdge()
         a.odata = 0
-        a.invrot.odata = 1
-        b.odata = 2
-        b.invrot.odata = 3
-        c.odata = 4
-        c.invrot.odata = 5
+        b.odata = 1
+        c.odata = 2
 
         bag.splice(a, b)
         bag.splice(b, c)
 
         expect(a.odata).toEqual(0)
-        expect(a.invrot.odata).toEqual(1)
         expect(b.odata).toEqual(0)
-        expect(b.invrot.odata).toEqual(1)
         expect(c.odata).toEqual(0)
-        expect(c.invrot.odata).toEqual(1)
     })
 
     it("doesn't set the odata for previously spliced edges", () => {
@@ -232,13 +226,9 @@ describe("set odata", () => {
         bag.splice(a, b)
         // Set edge b's odata
         b.odata = 1
-        b.rot.odata = 2
 
         expect(a.odata).toEqual(0)
-        expect(a.rot.odata).toEqual(undefined)
         expect(b.odata).toEqual(1)
-        expect(b.rot.odata).toEqual(2)
         expect(c.odata).toEqual(0)
-        expect(c.rot.odata).toEqual(undefined)
     })
 })

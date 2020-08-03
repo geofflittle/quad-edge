@@ -9,8 +9,6 @@ import {
 } from "./edge-record"
 import { Edge, makeToEdge } from "./edge"
 
-import { determinant3x3 } from "./math"
-
 export type CreateEdge<T> = () => Edge<T>
 export type Splice<T> = (a: Edge<T>, b: Edge<T>) => void
 export type DeleteEdge<T> = (e: Edge<T>) => Edge<T>
@@ -42,10 +40,10 @@ const makeCreateEdge = <T>(
         const e_1_id = idProvider()
         const e_2_id = idProvider()
         const e_3_id = idProvider()
-        const e_0 = createEdgeRecord({ id: e_0_id, canonicalId: e_0_id, rotId: e_1_id, onextId: e_0_id })
-        createEdgeRecord({ id: e_1_id, canonicalId: e_0_id, rotId: e_2_id, onextId: e_3_id })
-        createEdgeRecord({ id: e_2_id, canonicalId: e_0_id, rotId: e_3_id, onextId: e_2_id })
-        createEdgeRecord({ id: e_3_id, canonicalId: e_0_id, rotId: e_0_id, onextId: e_1_id })
+        const e_0 = createEdgeRecord({ id: e_0_id, rotId: e_1_id, onextId: e_0_id })
+        createEdgeRecord({ id: e_1_id, rotId: e_2_id, onextId: e_3_id })
+        createEdgeRecord({ id: e_2_id, rotId: e_3_id, onextId: e_2_id })
+        createEdgeRecord({ id: e_3_id, rotId: e_0_id, onextId: e_1_id })
         return toEdge(e_0)
     }
 }
@@ -61,6 +59,8 @@ const makeSplice = <T>(updateEdgeRecord: UpdateEdgeRecord<T>): Splice<T> => (a: 
     updateEdgeRecord({ id: b.id, onextId: t2.id })
     updateEdgeRecord({ id: alpha.id, onextId: t3.id })
     updateEdgeRecord({ id: beta.id, onextId: t4.id })
+    b.odata = a.odata
+    beta.odata = alpha.odata
 }
 
 const makeDeleteEdge = <T>(deleteEdgeRecord: DeleteEdgeRecord<T>, splice: Splice<T>): ((e: Edge<T>) => Edge<T>) => (

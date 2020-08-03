@@ -1,6 +1,5 @@
 export interface EdgeRecord<T> {
     readonly id: string
-    readonly canonicalId: string
     readonly rotId: string
     onextId: string
     data?: T
@@ -8,7 +7,6 @@ export interface EdgeRecord<T> {
 
 export interface CreateEdgeRecordProps {
     id: string
-    canonicalId: string
     rotId: string
     onextId: string
 }
@@ -17,11 +15,10 @@ export type CreateEdgeRecord<T> = (props: CreateEdgeRecordProps) => EdgeRecord<T
 
 export const makeCreateEdgeRecord = <T>(edges: Record<string, EdgeRecord<T>>): CreateEdgeRecord<T> => ({
     id,
-    canonicalId,
     rotId,
     onextId
 }: CreateEdgeRecordProps) => {
-    const edgeRecord = { id, canonicalId, rotId, onextId }
+    const edgeRecord = { id, rotId, onextId }
     return (edges[id] = edgeRecord)
 }
 

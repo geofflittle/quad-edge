@@ -2,7 +2,6 @@ import { EdgeRecord, UpdateEdgeRecord } from "./edge-record"
 
 export interface Edge<T> {
     readonly id: string
-    readonly canonical: Edge<T>
     odata?: T
     ddata?: T
     readonly rot: Edge<T>
@@ -52,14 +51,11 @@ export const makeToEdge = <T>(
 ): ((edgeRecord: EdgeRecord<T>) => Edge<T>) => {
     const toEdge = (edgeRecord: EdgeRecord<T>): Edge<T> => ({
         id: edgeRecord.id,
-        get canonical(): Edge<T> {
-            return toEdge(getEdgeRecord(edgeRecord.canonicalId))
-        },
         get odata(): T | undefined {
-            return getEdgeRecord(edgeRecord.id).data
+            return edgeRecord.data
         },
         set odata(data: T | undefined) {
-            updateEdgeRecord({ id: edgeRecord.canonicalId, data })
+            Array.from(this.oorbit).map((edge) => updateEdgeRecord({ id: edge.id, data }))
         },
         get ddata(): T | undefined {
             return this.sym.odata

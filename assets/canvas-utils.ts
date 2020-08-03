@@ -33,7 +33,7 @@ export const line = (
         ctx.textAlign = "center"
         ctx.translate(a.x + dx / 2, a.y + dy / 2)
         ctx.rotate(Math.atan2(dy, dx))
-        text(ctx, "black", "bold 30px Courier New", label, makePoint2D(0, -10))
+        text(ctx, strokeStyle, "bold 30px Courier New", label, makePoint2D(0, -10))
         ctx.restore()
     }
 }

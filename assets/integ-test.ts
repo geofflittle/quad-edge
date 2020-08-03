@@ -30,23 +30,36 @@ const makeFrameReqCallback = (sketch: Sketch): FrameRequestCallback => {
             edges.map((edge) => new Set(edge.lorbit)).filter((face) => face.size == 3)
         )
         faces.forEach((face) => {
-            // console.log(face)
             const vals = Array.from(face.values())
             const a = vals[0]
             const b = a.lnext
             const c = b.lnext
             const [center, r] = getCircle(a.odata, b.odata, c.odata)
-            strokeCircle(sketch.context, center, r, 1, "black")
+
+            if (sketch.mouse.loc != undefined && inCircle(a.odata, b.odata, c.odata, sketch.mouse.loc)) {
+                strokeCircle(sketch.context, center, r, 3, "green")
+            } else {
+                strokeCircle(sketch.context, center, r, 1, "black")
+            }
         })
-        // const a = sketch.triangleEdgeRef
-        // const b = a.lnext
-        // const c = b.lnext
-        // const triangle = [a, b, c]
-        // const [center, r] = getCircle(a.odata, b.odata, c.odata)
+
+        edges.forEach((edge) => {
+            line(sketch.context, edge.odata, edge.ddata, 3, "black", edge.id)
+        })
+
+        let loc
+        if (sketch.mouse.loc != undefined && (loc = locate(sketch.mouse.loc, edges[0]))) {
+            line(sketch.context, loc.odata, loc.ddata, 4, "blue", loc.id)
+        }
 
         if (sketch.mouse.loc != undefined) {
             const font = "bold 10px Courier New"
-            text(sketch.context, "black", font, `(${sketch.mouse.loc.x},${sketch.mouse.loc.y})`, makePoint2D(10, 20))
+            sketch.context.fillStyle = "white"
+            sketch.context.fillRect(20, 20, 70, 15)
+            sketch.context.strokeStyle = "black"
+            sketch.context.lineWidth = 1
+            sketch.context.strokeRect(20, 20, 70, 15)
+            text(sketch.context, "black", font, `(${sketch.mouse.loc.x},${sketch.mouse.loc.y})`, makePoint2D(20, 30))
             // triangle.forEach((edge, idx) => {
             //     text(
             //         sketch.context,
@@ -66,10 +79,6 @@ const makeFrameReqCallback = (sketch: Sketch): FrameRequestCallback => {
         } else {
             // strokeCircle(sketch.context, center, r, 3, "black")
         }
-
-        edges.forEach((edge) => {
-            line(sketch.context, edge.odata, edge.ddata, 3, "black", edge.id)
-        })
 
         window.requestAnimationFrame(frameReqCallback)
     }
@@ -142,26 +151,32 @@ window.onload = () => {
     c.odata = makePoint2D(600, 400)
 
     const d = sketch.edgeBag.createEdge()
-    d.odata = makePoint2D(0, 0)
-    d.ddata = makePoint2D(200, 200)
     sketch.edgeBag.splice(left, d)
-    sketch.edgeBag.splice(c, a)
+    sketch.edgeBag.splice(c.sym, d.sym)
 
-    // const a = sketch.edgeBag.addPolygon(3)
-    // const b = a.lnext
-    // const c = b.lnext
-    // a.odata = makePoint2D(200, 200)
-    // b.odata = makePoint2D(600, 600)
-    // c.odata = makePoint2D(600, 100)
+    const e = sketch.edgeBag.createEdge()
+    sketch.edgeBag.splice(bottom, e)
+    sketch.edgeBag.splice(d.sym, e.sym)
 
-    // sketch.edgeBag.connect(top, a)
-    // sketch.edgeBag.connect(top, c)
-    // sketch.edgeBag.connect(left, a)
-    // sketch.edgeBag.connect(left, b)
-    // sketch.edgeBag.connect(bottom, b)
-    // sketch.edgeBag.connect(right, b)
-    // sketch.edgeBag.connect(right, c)
-    ;[top, left, bottom, right, a, b, c, d, d.sym].forEach((edge) => console.log(edge.toJSON()))
+    const f = sketch.edgeBag.createEdge()
+    sketch.edgeBag.splice(bottom, f)
+    sketch.edgeBag.splice(a.sym, f.sym)
+
+    const g = sketch.edgeBag.createEdge()
+    sketch.edgeBag.splice(right, g)
+    sketch.edgeBag.splice(f.sym, g.sym)
+
+    const h = sketch.edgeBag.createEdge()
+    sketch.edgeBag.splice(right, h)
+    sketch.edgeBag.splice(b.sym, h.sym)
+
+    const i = sketch.edgeBag.createEdge()
+    sketch.edgeBag.splice(top, i)
+    sketch.edgeBag.splice(h.sym, i.sym)
+
+    const j = sketch.edgeBag.createEdge()
+    sketch.edgeBag.splice(top, j)
+    sketch.edgeBag.splice(c.sym, j.sym)
 
     window.requestAnimationFrame(makeFrameReqCallback(sketch))
 }
