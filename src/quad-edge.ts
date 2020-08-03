@@ -1,4 +1,4 @@
-import { Point2D, makeLine } from "./point-2d"
+import { Point2D, makeLine } from "./two-d"
 
 import * as util from "util"
 
@@ -293,16 +293,9 @@ export const deleteEdge = <T>(e: Edge<T>) => {
     splice(e.sym, e.sym.oprev)
 }
 
-// export const subdivision = <T>(a: T, b: T, c: T) => {
-//     const e_a = makeEdge(a, b)
-//     const e_b = makeEdge(b, c)
-//     const e_c = makeEdge(c, a)
-//     splice(e_a.sym, e_b)
-//     splice(e_b.sym, e_c)
-//     splice(e_c.sym, e_a)
-//     return e_a
-// }
-
+/**
+ * Rotates clockwise an edge within a quadrilateral.
+ */
 export const swap = <T>(e: Edge<T>) => {
     const a = e.oprev
     const b = e.sym.oprev
@@ -314,58 +307,83 @@ export const swap = <T>(e: Edge<T>) => {
     e.dest = b.dest
 }
 
-// // double the area defined by a, b, and c
-// export const triArea = (a: Point2D, b: Point2D, c: Point2D) => (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)
-
-// // true iff d is inside the circle defined by a, b, and c
-// export const inCircle = (a: Point2D, b: Point2D, c:Point2D, d:Point2D) =>
-//     (a.x*a.x + a.y*a.y) * triArea(b, c, d) -
-//     (b.x*b.x + b.y*b.y) * triArea(a, c, d) +
-//     (c.x*c.x + c.y*c.y) * triArea(a, b, d) -
-//     (d.x*d.x + d.y*d.y) * triArea(a, b, c) > 0
-
-// // true iff a, b, and c are in counterclockwise order
-// export const ccw = (a: Point2D, b: Point2D, c: Point2D) => triArea(a,b,c) > 0
-
-// export const rightOf = (a: Point2D, e: Edge<Point2D>) => ccw(a, e.dest, e.org)
-
-// export const leftOf = (a: Point2D, e: Edge<Point2D>) => ccw(a, e.org, e.dest)
-
-// export const onEdge = (a: Point2D, e: Edge<Point2D>) => {
-//     const t1 = a.minus(e.org).norm
-//     const t2 = a.minus(e.dest).norm
-//     if (t1 < EPS || t2 < EPS) {
-//         return true
-//     }
-//     const t3 = e.org.minus(e.dest).norm
-//     if (t1 > t3 || t2 > t3) {
-//         return false
-//     }
-//     const line = makeLine(e.org, e.dest)
-//     return Math.abs(line.eval(a)) < EPS
+// export const subdivision = <T>(a: T, b: T, c: T) => {
+//     const e_a = makeEdge(a, b)
+//     const e_b = makeEdge(b, c)
+//     const e_c = makeEdge(c, a)
+//     splice(e_a.sym, e_b)
+//     splice(e_b.sym, e_c)
+//     splice(e_c.sym, e_a)
+//     return e_a
 // }
 
-// export const locate = (e: Edge<Point2D>, a: Point2D) => {
-//     let cur = e
-//     while (true) {
-//         if (a.equals(cur.org) || a.equals(cur.dest)) {
-//             return cur
-//         }
-//         if (rightOf(a, cur)) {
-//             cur = e.sym
-//             continue
-//         }
-//         if (!rightOf(a, e.onext)) {
-//             cur = e.onext
-//             continue
-//         }
-//         if (!rightOf(a, e.dprev)) {
-//             cur = e.dprev
-//             continue
-//         }
-//         return cur
-//     }
-// }
+/**
+ * Returns double the area of the triangle determined by the given 3 points.
+ * If the points are in clockwise order, the result will be negative.
+ */
+export const doubleCcwTriArea = (a: Point2D, b: Point2D, c: Point2D) =>
+    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
+
+/**
+ * Returns true iff a, b, and c are in ccw order
+ */
+export const isCcw = (a: Point2D, b: Point2D, c: Point2D) => doubleCcwTriArea(a, b, c) > 0
+
+/**
+ * Returns true iff d is inside the circle defined by a, b, and c.
+ */
+export const inCircle = (a: Point2D, b: Point2D, c: Point2D, d: Point2D) =>
+    (a.x * a.x + a.y * a.y) * doubleCcwTriArea(b, c, d) -
+        (b.x * b.x + b.y * b.y) * doubleCcwTriArea(a, c, d) +
+        (c.x * c.x + c.y * c.y) * doubleCcwTriArea(a, b, d) -
+        (d.x * d.x + d.y * d.y) * doubleCcwTriArea(a, b, c) >
+    0
+
+/**
+ * Returns true iff the point a is to the right of the edge e
+ */
+export const rightOf = (a: Point2D, e: Edge<Point2D>) => isCcw(a, e.dest, e.org)
+
+/**
+ * Returns true iff the point a is to the left of the edge e
+ */
+export const leftOf = (a: Point2D, e: Edge<Point2D>) => isCcw(a, e.org, e.dest)
+
+export const onEdge = (a: Point2D, e: Edge<Point2D>) => {
+    const t1 = a.minus(e.org).norm
+    const t2 = a.minus(e.dest).norm
+    if (t1 < EPS || t2 < EPS) {
+        return true
+    }
+    const t3 = e.org.minus(e.dest).norm
+    if (t1 > t3 || t2 > t3) {
+        return false
+    }
+    const line = makeLine(e.org, e.dest)
+    return Math.abs(line.eval(a)) < EPS
+}
+
+export const locate = (e: Edge<Point2D>, a: Point2D) => {
+    let cur = e
+    while (true) {
+        if (a.equals(cur.org) || a.equals(cur.dest)) {
+            return cur
+        }
+        if (rightOf(a, cur)) {
+            cur = e.sym
+            continue
+        }
+        if (!rightOf(a, e.onext)) {
+            cur = e.onext
+            continue
+        }
+        if (!rightOf(a, e.dprev)) {
+            cur = e.dprev
+            continue
+        }
+        return cur
+    }
+}
 
 // export const insertSite = (edge: Edge<Point2D>, a: Point2D) => {
 //     let e = locate(edge, a)

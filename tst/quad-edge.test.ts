@@ -4,7 +4,9 @@ import {
     addEdge,
     connect,
     deleteEdge,
+    doubleCcwTriArea,
     edgeToString,
+    inCircle,
     makeEdge,
     polygon,
     setIdSeed,
@@ -430,5 +432,45 @@ describe("swap", () => {
         expect(e.dorbit.map((e) => e.id)).toEqual([e.id, d.id, a.sym.id])
         expect(e.lorbit.map((e) => e.id)).toEqual([e.id, a.id, b.id])
         expect(e.rorbit.map((e) => e.id)).toEqual([e.id, c.sym.id, d.sym.id])
+    })
+})
+
+describe("doubleArea", () => {
+    it("calculates double the area defined by 3 points", () => {
+        const area = doubleCcwTriArea(makePoint2D(0, 0), makePoint2D(2, 0), makePoint2D(0, 1))
+
+        expect(area).toEqual(2)
+    })
+})
+
+describe("inCircle", () => {
+    it("determines points in the circle", () => {
+        const inIt = inCircle(makePoint2D(0, 0), makePoint2D(1, 0), makePoint2D(0, 1), makePoint2D(-0.1, -0.1))
+
+        expect(inIt).toBeFalsy()
+    })
+
+    it("determines points in the circle", () => {
+        const inIt = inCircle(makePoint2D(0, 0), makePoint2D(1, 0), makePoint2D(0, 1), makePoint2D(1.1, -0.1))
+
+        expect(inIt).toBeFalsy()
+    })
+
+    it("determines points in the circle", () => {
+        const inIt = inCircle(makePoint2D(0, 0), makePoint2D(1, 0), makePoint2D(0, 1), makePoint2D(1.1, 1.1))
+
+        expect(inIt).toBeFalsy()
+    })
+
+    it("determines points in the circle", () => {
+        const inIt = inCircle(makePoint2D(0, 0), makePoint2D(1, 0), makePoint2D(0, 1), makePoint2D(-0.1, 1.1))
+
+        expect(inIt).toBeFalsy()
+    })
+
+    it("determines points in the circle", () => {
+        const inIt = inCircle(makePoint2D(0, 0), makePoint2D(1, 0), makePoint2D(0, 1), makePoint2D(0.5, 0.5))
+
+        expect(inIt).toBeTruthy()
     })
 })

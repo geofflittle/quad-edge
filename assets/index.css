@@ -1,0 +1,17 @@
+html {
+    background-color: #181a1b;
+    display: table;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+canvas {
+    border: thin solid black;
+    display: block;
+    margin: auto;
+}
