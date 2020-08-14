@@ -60,19 +60,3 @@ export const getCircle = (a: Point2D, b: Point2D, c: Point2D): [Point2D, number]
     const r = Math.sqrt(Math.pow(a.x - x, 2) + Math.pow(a.y - y, 2))
     return [makePoint2D(x, y), r]
 }
-
-const EPS = 0.000001
-
-export const onEdge = (x: Point2D, a: Point2D, b: Point2D) => {
-    const t1 = x.minus(a).norm
-    const t2 = x.minus(b).norm
-    if (t1 < EPS || t2 < EPS) {
-        return true
-    }
-    const t3 = a.minus(b).norm
-    if (t1 > t3 || t2 > t3) {
-        return false
-    }
-    const line = makeLine(a, b)
-    return Math.abs(line.eval(a)) < EPS
-}

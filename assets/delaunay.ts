@@ -1,8 +1,8 @@
-import { EdgeBag, makeEdgeBag } from "../src/quad-edge-2"
+import { EdgeBag, makeEdgeBag } from "../src/quad-edge"
 import { Point2D, makePoint2D } from "../src/two-d"
-import { ccw, getCircle, inCircle } from "../src/math"
-import { fillCircle, line, strokeCircle, text } from "./canvas-utils"
-import { locate, rightOf } from "../src/quad-edge-2d"
+import { getCircle, inCircle } from "../src/math"
+import { insertSite, locate } from "../src/quad-edge-2d"
+import { line, strokeCircle, text } from "./canvas-utils"
 
 import { Edge } from "../src/edge"
 
@@ -60,24 +60,6 @@ const makeFrameReqCallback = (sketch: Sketch): FrameRequestCallback => {
             sketch.context.lineWidth = 1
             sketch.context.strokeRect(20, 20, 70, 15)
             text(sketch.context, "black", font, `(${sketch.mouse.loc.x},${sketch.mouse.loc.y})`, makePoint2D(20, 30))
-            // triangle.forEach((edge, idx) => {
-            //     text(
-            //         sketch.context,
-            //         "black",
-            //         font,
-            //         `RightOf(${edge.id})=${rightOf(sketch.mouse.loc, edge)}`,
-            //         makePoint2D(10, 20 * idx + 40)
-            //     )
-            // })
-
-            // const edge = locate(sketch.mouse.loc, a)
-            // if (inCircle(a.odata, b.odata, c.odata, sketch.mouse.loc)) {
-            //     strokeCircle(sketch.context, center, r, 3, "green")
-            // } else {
-            //     strokeCircle(sketch.context, center, r, 3, "red")
-            // }
-        } else {
-            // strokeCircle(sketch.context, center, r, 3, "black")
         }
 
         window.requestAnimationFrame(frameReqCallback)
@@ -134,49 +116,15 @@ window.onload = () => {
     )
 
     sketch.edgeBag = makeEdgeBag<Point2D>()
-    const top = sketch.edgeBag.addPolygon(4)
-    const left = top.lnext
-    const bottom = left.lnext
-    const right = bottom.lnext
-    top.odata = makePoint2D(sketch.canvas.width, 0)
-    left.odata = makePoint2D(0, 0)
-    bottom.odata = makePoint2D(0, sketch.canvas.height)
-    right.odata = makePoint2D(sketch.canvas.width, sketch.canvas.height)
 
     const a = sketch.edgeBag.addPolygon(3)
     const b = a.lnext
     const c = b.lnext
-    a.odata = makePoint2D(200, 300)
-    b.odata = makePoint2D(300, 600)
-    c.odata = makePoint2D(600, 400)
+    a.odata = makePoint2D(0, 0)
+    b.odata = makePoint2D(0, sketch.canvas.height * 2)
+    c.odata = makePoint2D(sketch.canvas.width * 2, 0)
 
-    const d = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(left, d)
-    sketch.edgeBag.splice(c.sym, d.sym)
-
-    const e = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(bottom, e)
-    sketch.edgeBag.splice(d.sym, e.sym)
-
-    const f = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(bottom, f)
-    sketch.edgeBag.splice(a.sym, f.sym)
-
-    const g = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(right, g)
-    sketch.edgeBag.splice(f.sym, g.sym)
-
-    const h = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(right, h)
-    sketch.edgeBag.splice(b.sym, h.sym)
-
-    const i = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(top, i)
-    sketch.edgeBag.splice(h.sym, i.sym)
-
-    const j = sketch.edgeBag.createEdge()
-    sketch.edgeBag.splice(top, j)
-    sketch.edgeBag.splice(c.sym, j.sym)
+    insertSite(sketch.edgeBag, makePoint2D(200, 300))
 
     window.requestAnimationFrame(makeFrameReqCallback(sketch))
 }

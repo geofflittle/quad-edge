@@ -19,8 +19,8 @@ export const makePoint2D = (x: number, y: number): Point2D => ({
     get norm() {
         return Math.sqrt(x * x + y * y)
     },
-    equals: (a: Point2D) => x == a.x && y == a.y,
-    minus: (a: Point2D) => makePoint2D(x - a.x, y - a.y)
+    equals: (p: Point2D) => x == p.x && y == p.y,
+    minus: (p: Point2D) => makePoint2D(x - p.x, y - p.y)
 })
 
 export const makeLine = (p: Point2D, q: Point2D): Line2D => {

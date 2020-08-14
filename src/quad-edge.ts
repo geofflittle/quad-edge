@@ -1,418 +1,164 @@
-import { Point2D, makeLine } from "./two-d"
+import {
+    CreateEdgeRecordProps,
+    DeleteEdgeRecord,
+    EdgeRecord,
+    UpdateEdgeRecord,
+    makeCreateEdgeRecord,
+    makeDeleteEdgeRecord,
+    makeUpdateEdgeRecord
+} from "./edge-record"
+import { Edge, makeToEdge } from "./edge"
 
-import * as util from "util"
+export type CreateEdge<T> = () => Edge<T>
+export type Splice<T> = (a: Edge<T>, b: Edge<T>) => void
+export type DeleteEdge<T> = (e: Edge<T>) => Edge<T>
+export type Concat<T> = (a: Edge<T>, b: Edge<T>) => void
+export type AddEdge<T> = (e: Edge<T>) => Edge<T>
+export type Connect<T> = (a: Edge<T>, b: Edge<T>) => Edge<T>
+export type AddPolygon<T> = (n: number) => Edge<T>
+export type Swap<T> = (e: Edge<T>) => void
 
-const EPS = 0.001
-
-export interface Edge<T> {
-    readonly id: string
-    data: T
-    org: T
-    dest: T
-    readonly rot: Edge<T>
-    readonly sym: Edge<T>
-    readonly invrot: Edge<T>
-    onext: Edge<T>
-    readonly oprev: Edge<T>
-    readonly dnext: Edge<T>
-    readonly dprev: Edge<T>
-    readonly lnext: Edge<T>
-    readonly lprev: Edge<T>
-    readonly rnext: Edge<T>
-    readonly rprev: Edge<T>
-    readonly oorbit: Edge<T>[]
-    readonly dorbit: Edge<T>[]
-    readonly lorbit: Edge<T>[]
-    readonly rorbit: Edge<T>[]
+export interface EdgeBag<T> {
+    readonly edge: Edge<T>
+    readonly edges: Edge<T>[]
+    createEdge: CreateEdge<T>
+    splice: Splice<T>
+    deleteEdge: DeleteEdge<T>
+    concat: Concat<T>
+    addEdge: AddEdge<T>
+    connect: Connect<T>
+    addPolygon: AddPolygon<T>
+    swap: Swap<T>
 }
 
-export type QuadEdge<T> = [Edge<T>, Edge<T>, Edge<T>, Edge<T>]
-
-const toBijective = (n: number): string =>
-    (n > 26 ? toBijective(Math.floor((n - 1) / 26)) : "") + ((n % 26 || 26) + 9).toString(36)
-
-let id = 0
-export const setIdSeed = (seed: number) => (id = seed)
-const generateId = () => toBijective(id++).toUpperCase()
-
-/*
-
-\                ^ 
- \ dnext        / oprev
-  \            /
-   v  e       /
-    <---------
-   ^          \
-  /            \
- / dprev        \ onext
-/                v
-
----
-
-^                / 
- \ rprev        / rnext
-  \            /
-   \  e       v
-    <---------
-   /          ^
-  /            \
- / lnext        \ lprev
-v                \
-
-*/
-const edge = <T>(quad: QuadEdge<T>, index: number): Edge<T> => {
-    const id = generateId()
-    let data: T
-    let onext: Edge<T>
-    const e = {
-        get id() {
-            return id
-        },
-        set data(d: T) {
-            data = d
-        },
-        get org() {
-            return data
-        },
-        // TODO: Setting the org should set the orgs for the other orbits
-        set org(d: T) {
-            // this.oorbit.forEach(e => {
-            //     console.log("setting data for", e.id)
-            e.data = d
-            // })
-        },
-        get dest() {
-            return this.sym.org
-        },
-        set dest(d: T) {
-            this.sym.org = d
-        },
-        get rot() {
-            return quad[(index + 1) % 4]
-        },
-        get sym() {
-            return quad[(index + 2) % 4]
-        },
-        get invrot() {
-            return quad[(index + 3) % 4]
-        },
-        get onext() {
-            return onext
-        },
-        set onext(e: Edge<T>) {
-            onext = e
-        },
-        get oprev() {
-            return this.rot.onext.rot
-        },
-        get dnext() {
-            return this.sym.onext.sym
-        },
-        get dprev() {
-            return this.invrot.onext.invrot
-        },
-        get lnext() {
-            return this.invrot.onext.rot
-        },
-        get lprev() {
-            return this.onext.sym
-        },
-        get rnext() {
-            return this.rot.onext.invrot
-        },
-        get rprev() {
-            return this.sym.onext
-        },
-        get index() {
-            return index
-        },
-        // TODO: Fix the following
-        get oorbit() {
-            const seen: { [key: string]: Edge<T> } = {}
-            let cur: Edge<T> = this
-            do {
-                seen[cur.id] = cur
-                cur = cur.onext
-            } while (!seen[cur.id])
-            return [...Object.values(seen)]
-        },
-        get dorbit() {
-            const seen: { [key: string]: Edge<T> } = {}
-            let cur: Edge<T> = this
-            do {
-                seen[cur.id] = cur
-                cur = cur.dnext
-            } while (!seen[cur.id])
-            return [...Object.values(seen)]
-        },
-        get lorbit() {
-            const seen: { [key: string]: Edge<T> } = {}
-            let cur: Edge<T> = this
-            do {
-                seen[cur.id] = cur
-                cur = cur.lnext
-            } while (!seen[cur.id])
-            return [...Object.values(seen)]
-        },
-        get rorbit() {
-            const seen: { [key: string]: Edge<T> } = {}
-            let cur: Edge<T> = this
-            do {
-                seen[cur.id] = cur
-                cur = cur.rnext
-            } while (!seen[cur.id])
-            return [...Object.values(seen)]
-        }
+const makeCreateEdge = <T>(
+    createEdgeRecord: (props: CreateEdgeRecordProps) => EdgeRecord<T>,
+    toEdge: (edgeRecord: EdgeRecord<T>) => Edge<T>,
+    idProvider: () => string
+): (() => Edge<T>) => {
+    return () => {
+        const e_0_id = idProvider()
+        const e_1_id = idProvider()
+        const e_2_id = idProvider()
+        const e_3_id = idProvider()
+        const e_0 = createEdgeRecord({ id: e_0_id, rotId: e_1_id, onextId: e_0_id })
+        createEdgeRecord({ id: e_1_id, rotId: e_2_id, onextId: e_3_id })
+        createEdgeRecord({ id: e_2_id, rotId: e_3_id, onextId: e_2_id })
+        createEdgeRecord({ id: e_3_id, rotId: e_0_id, onextId: e_1_id })
+        return toEdge(e_0)
     }
-    return (onext = e)
 }
 
-export const edgeToString = <T>(e: Edge<T>) => {
-    return JSON.stringify({
-        id: e.id,
-        rot: e.rot.id,
-        sym: e.sym.id,
-        invrot: e.invrot.id,
-        onext: e.onext.id,
-        oprev: e.oprev.id,
-        dnext: e.dnext.id,
-        dprev: e.dprev.id,
-        lnext: e.lnext.id,
-        lprev: e.lprev.id,
-        rnext: e.rnext.id,
-        rprev: e.rprev.id
-    })
-}
-
-export const makeEdge = <T>(org: T, dest: T) => {
-    const quad: QuadEdge<T> = <QuadEdge<T>>new Array(4)
-    const e_0 = (quad[0] = edge(quad, 0))
-    const e_1 = (quad[1] = edge(quad, 1))
-    const e_2 = (quad[2] = edge(quad, 2))
-    const e_3 = (quad[3] = edge(quad, 3))
-    e_0.onext = e_0
-    e_1.onext = e_3
-    e_2.onext = e_2
-    e_3.onext = e_1
-    e_0.data = org
-    e_0.sym.data = dest
-    return e_0
-}
-
-/**
- * Splice takes two edges and concats their edge rings.
- *
- * If these edges are singular and disjoint, this operation will set each
- * edge's onext and rot's onext to the other.
- *
- * If these edges are joined and have each other as onexts, this operation will
- * split them so that they are singular.
- *
- * If either of these edges is not singular, splice merges their left faces.
- *
- * So for example, imagine a and b are edges in the same onext orbit with left
- * faces F and G, respectively
- *
- *       ^ a
- *   F   |
- *       |
- *  <---- ---->
- *       |
- *       |   G
- *     b v
- *
- *   splice(a, b) leads to
- *
- *           ^ a
- *           |
- *      F=G  |
- *  <----     ---->
- *       |
- *       |
- *     b v
- *
- *   where F and G are now the same face.
- *
- */
-export const splice = <T>(a: Edge<T>, b: Edge<T>) => {
+const makeSplice = <T>(updateEdgeRecord: UpdateEdgeRecord<T>): Splice<T> => (a: Edge<T>, b: Edge<T>) => {
     const alpha = a.onext.rot
     const beta = b.onext.rot
-
     const t1 = b.onext
     const t2 = a.onext
     const t3 = beta.onext
     const t4 = alpha.onext
-    a.onext = t1
-    b.onext = t2
-    alpha.onext = t3
-    beta.onext = t4
+    updateEdgeRecord({ id: a.id, onextId: t1.id })
+    updateEdgeRecord({ id: b.id, onextId: t2.id })
+    updateEdgeRecord({ id: alpha.id, onextId: t3.id })
+    updateEdgeRecord({ id: beta.id, onextId: t4.id })
+    b.odata = a.odata
+    beta.odata = alpha.odata
 }
 
-/**
- * Makes a new edge and concats its origin to the destination of the provided
- * edge.
- */
-export const addEdge = <T>(e_0: Edge<T>, t: T) => {
-    const e_1 = makeEdge(e_0.dest, t)
-    splice(e_0.sym, e_1)
-    return e_1
-}
-
-/**
- * Add a new edge e connecting the destination of a to the origin of b, in such
- * a way that all three have the same left face after the connection is
- * complete.
- */
-export const connect = <T>(a: Edge<T>, b: Edge<T>) => {
-    const e = makeEdge(a.dest, b.org)
-    splice(e, a.lnext)
-    splice(e.sym, b)
+const makeDeleteEdge = <T>(deleteEdgeRecord: DeleteEdgeRecord<T>, splice: Splice<T>): ((e: Edge<T>) => Edge<T>) => (
+    e: Edge<T>
+) => {
+    if (e.rot.onext.id != e.invrot.id || e.onext.id != e.id) {
+        // We need to isolate the edge before we remove it
+        splice(e, e.oprev)
+        splice(e.sym, e.sym.oprev)
+    }
+    const rot = e.rot
+    const sym = e.sym
+    const invrot = e.invrot
+    deleteEdgeRecord({ id: e.id })
+    deleteEdgeRecord({ id: rot.id })
+    deleteEdgeRecord({ id: sym.id })
+    deleteEdgeRecord({ id: invrot.id })
     return e
 }
 
-/**
- * Makes a polygon.
- */
-export const polygon = (n: number) => {
+const makeConcat = <T>(splice: Splice<T>): Concat<T> => (a: Edge<T>, b: Edge<T>) => {
+    splice(a.sym, b)
+}
+
+const makeAddEdge = <T>(createEdge: CreateEdge<T>, splice: Splice<T>): AddEdge<T> => (a: Edge<T>) => {
+    const b = createEdge()
+    splice(a.sym, b)
+    return b
+}
+
+const makeConnect = <T>(createEdge: CreateEdge<T>, splice: Splice<T>): Connect<T> => (a: Edge<T>, b: Edge<T>) => {
+    const c = createEdge()
+    splice(a, c)
+    splice(b, c.sym)
+    return c
+}
+
+const makeAddPolygon = <T>(createEdge: CreateEdge<T>, addEdge: AddEdge<T>, connect: Connect<T>): AddPolygon<T> => (
+    n: number
+) => {
     if (n < 2) {
         throw new Error()
     }
-    const first = makeEdge(0, 1)
-    const last = [...new Array(n - 2).keys()].reduce(addEdge, first)
-    connect(last, first)
+    const first = createEdge()
+    const penultimate = [...new Array(n - 2).keys()].reduce(addEdge, first)
+    connect(penultimate.sym, first)
     return first
 }
 
-/**
- * Removes an edge from its structure.  For example, removing an edge from a
- * triangle results in an isolated edge and a 3-edged line.  It does not
- * "re-sew" the edges together that the removed edge used to connect.
- */
-export const deleteEdge = <T>(e: Edge<T>) => {
-    splice(e, e.oprev)
-    splice(e.sym, e.sym.oprev)
-}
-
-/**
- * Rotates clockwise an edge within a quadrilateral.
- */
-export const swap = <T>(e: Edge<T>) => {
+const makeSwap = <T>(splice: Splice<T>): Swap<T> => (e: Edge<T>) => {
     const a = e.oprev
     const b = e.sym.oprev
     splice(e, a)
     splice(e.sym, b)
     splice(e, a.lnext)
     splice(e.sym, b.lnext)
-    e.org = a.dest
-    e.dest = b.dest
 }
 
-// export const subdivision = <T>(a: T, b: T, c: T) => {
-//     const e_a = makeEdge(a, b)
-//     const e_b = makeEdge(b, c)
-//     const e_c = makeEdge(c, a)
-//     splice(e_a.sym, e_b)
-//     splice(e_b.sym, e_c)
-//     splice(e_c.sym, e_a)
-//     return e_a
-// }
+const toAlpha = (n: number): string =>
+    (n > 26 ? toAlpha(Math.floor((n - 1) / 26)) : "") + ((n % 26 || 26) + 9).toString(36)
 
-/**
- * Returns double the area of the triangle determined by the given 3 points.
- * If the points are in clockwise order, the result will be negative.
- */
-export const doubleCcwTriArea = (a: Point2D, b: Point2D, c: Point2D) =>
-    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)
-
-/**
- * Returns true iff a, b, and c are in ccw order
- */
-export const isCcw = (a: Point2D, b: Point2D, c: Point2D) => doubleCcwTriArea(a, b, c) > 0
-
-/**
- * Returns true iff d is inside the circle defined by a, b, and c.
- */
-export const inCircle = (a: Point2D, b: Point2D, c: Point2D, d: Point2D) =>
-    (a.x * a.x + a.y * a.y) * doubleCcwTriArea(b, c, d) -
-        (b.x * b.x + b.y * b.y) * doubleCcwTriArea(a, c, d) +
-        (c.x * c.x + c.y * c.y) * doubleCcwTriArea(a, b, d) -
-        (d.x * d.x + d.y * d.y) * doubleCcwTriArea(a, b, c) >
-    0
-
-/**
- * Returns true iff the point a is to the right of the edge e
- */
-export const rightOf = (a: Point2D, e: Edge<Point2D>) => isCcw(a, e.dest, e.org)
-
-/**
- * Returns true iff the point a is to the left of the edge e
- */
-export const leftOf = (a: Point2D, e: Edge<Point2D>) => isCcw(a, e.org, e.dest)
-
-export const onEdge = (a: Point2D, e: Edge<Point2D>) => {
-    const t1 = a.minus(e.org).norm
-    const t2 = a.minus(e.dest).norm
-    if (t1 < EPS || t2 < EPS) {
-        return true
+export const makeEdgeBag = <T>(): EdgeBag<T> => {
+    let idx = 1
+    const edgeRecords: Record<string, EdgeRecord<T>> = {}
+    const createEdgeRecord = makeCreateEdgeRecord(edgeRecords)
+    const getEdgeRecord = (id: string): EdgeRecord<T> => {
+        const e = edgeRecords[id]
+        if (!e) {
+            throw new Error(`No edge for id ${id}`)
+        }
+        return e
     }
-    const t3 = e.org.minus(e.dest).norm
-    if (t1 > t3 || t2 > t3) {
-        return false
-    }
-    const line = makeLine(e.org, e.dest)
-    return Math.abs(line.eval(a)) < EPS
-}
-
-export const locate = (e: Edge<Point2D>, a: Point2D) => {
-    let cur = e
-    while (true) {
-        if (a.equals(cur.org) || a.equals(cur.dest)) {
-            return cur
-        }
-        if (rightOf(a, cur)) {
-            cur = e.sym
-            continue
-        }
-        if (!rightOf(a, e.onext)) {
-            cur = e.onext
-            continue
-        }
-        if (!rightOf(a, e.dprev)) {
-            cur = e.dprev
-            continue
-        }
-        return cur
+    const updateEdgeRecord = makeUpdateEdgeRecord(edgeRecords)
+    const deleteEdgeRecord = makeDeleteEdgeRecord(edgeRecords)
+    const toEdge = makeToEdge(getEdgeRecord, updateEdgeRecord)
+    const createEdge = makeCreateEdge(createEdgeRecord, toEdge, () => toAlpha(idx++))
+    const splice = makeSplice(updateEdgeRecord)
+    const deleteEdge = makeDeleteEdge(deleteEdgeRecord, splice)
+    const concat = makeConcat(splice)
+    const addEdge = makeAddEdge(createEdge, splice)
+    const connect = makeConnect(createEdge, splice)
+    const addPolygon = makeAddPolygon(createEdge, addEdge, connect)
+    const swap = makeSwap(splice)
+    return {
+        get edge() {
+            return toEdge(getEdgeRecord("a"))
+        },
+        get edges() {
+            return Object.values(edgeRecords).map(toEdge)
+        },
+        createEdge,
+        splice,
+        deleteEdge,
+        concat,
+        addEdge,
+        connect,
+        addPolygon,
+        swap
     }
 }
-
-// export const insertSite = (edge: Edge<Point2D>, a: Point2D) => {
-//     let e = locate(edge, a)
-//     if (a.equals(e.org) || a.equals(e.dest)) {
-//         return
-//     }
-//     if (onEdge(a, e)) {
-//         e = e.oprev
-//         deleteEdge(e.onext)
-//     }
-
-//     let base = makeEdge(e.org, a)
-//     splice(base, e)
-//     let e_1 = base
-//     do {
-//         base = connect(e, base.sym)
-//         e = base.oprev
-//     } while (e.lnext != e_1)
-
-//     do {
-//         const t = e.oprev
-//         if (rightOf(t.dest, e) && inCircle(e.org, t.dest, e.dest, a)) {
-//             swap(e)
-//             e = e.oprev
-//             continue
-//         }
-//         if (e.onext == e_1) {
-//             return
-//         }
-//         e = e.onext.lprev
-//     } while (true)
-// }
