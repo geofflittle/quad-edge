@@ -26,43 +26,12 @@ const makeFrameReqCallback = (sketch: Sketch): FrameRequestCallback => {
 
         const edges = sketch.edgeBag.edges.filter((edge) => edge.odata != undefined)
 
-        const faces: Set<Set<Edge<Point2D>>> = new Set(
-            edges.map((edge) => new Set(edge.lorbit)).filter((face) => face.size == 3)
-        )
-        faces.forEach((face) => {
-            const vals = Array.from(face.values())
-            const a = vals[0]
-            const b = a.lnext
-            const c = b.lnext
-            const [center, r] = getCircle(a.odata, b.odata, c.odata)
-
-            if (sketch.mouse.loc != undefined && inCircle(a.odata, b.odata, c.odata, sketch.mouse.loc)) {
-                strokeCircle(sketch.context, center, r, 3, "green")
-            } else {
-                strokeCircle(sketch.context, center, r, 1, "black")
-            }
-        })
-
         edges.forEach((edge) => {
+            console.log(edge.toJSON())
             line(sketch.context, edge.odata, edge.ddata, 3, "black", edge.id)
         })
 
-        let loc
-        if (sketch.mouse.loc != undefined && (loc = locate(sketch.mouse.loc, edges[0]))) {
-            line(sketch.context, loc.odata, loc.ddata, 4, "blue", loc.id)
-        }
-
-        if (sketch.mouse.loc != undefined) {
-            const font = "bold 10px Courier New"
-            sketch.context.fillStyle = "white"
-            sketch.context.fillRect(20, 20, 70, 15)
-            sketch.context.strokeStyle = "black"
-            sketch.context.lineWidth = 1
-            sketch.context.strokeRect(20, 20, 70, 15)
-            text(sketch.context, "black", font, `(${sketch.mouse.loc.x},${sketch.mouse.loc.y})`, makePoint2D(20, 30))
-        }
-
-        window.requestAnimationFrame(frameReqCallback)
+        // window.requestAnimationFrame(frameReqCallback)
     }
     return frameReqCallback
 }
@@ -117,14 +86,19 @@ window.onload = () => {
 
     sketch.edgeBag = makeEdgeBag<Point2D>()
 
-    const a = sketch.edgeBag.addPolygon(3)
+    const a = sketch.edgeBag.addPolygon(4)
     const b = a.lnext
     const c = b.lnext
-    a.odata = makePoint2D(0, 0)
-    b.odata = makePoint2D(0, sketch.canvas.height * 2)
-    c.odata = makePoint2D(sketch.canvas.width * 2, 0)
+    const d = c.lnext
+    a.odata = makePoint2D(-Infinity, -Infinity)
+    b.odata = makePoint2D(-Infinity, Infinity)
+    c.odata = makePoint2D(Infinity, Infinity)
+    d.odata = makePoint2D(Infinity, -Infinity)
 
-    insertSite(sketch.edgeBag, makePoint2D(200, 300))
+    insertSite(sketch.edgeBag, makePoint2D(100, 100))
+    // insertSite(sketch.edgeBag, makePoint2D(100, 600))
+    // insertSite(sketch.edgeBag, makePoint2D(600, 300))
+    // insertSite(sketch.edgeBag, makePoint2D(600, 500))
 
     window.requestAnimationFrame(makeFrameReqCallback(sketch))
 }

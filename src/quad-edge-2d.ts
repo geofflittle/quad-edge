@@ -62,13 +62,14 @@ export const onEdge = (x: Point2D, e: Edge<Point2D>): boolean => {
 }
 
 export const insertSite = (bag: EdgeBag<Point2D>, x: Point2D) => {
-    let cur = bag.edge
-    if (!cur.odata || !cur.ddata) {
+    let loc = bag.edge
+    if (!loc.odata || !loc.ddata) {
         throw new Error("No o or d data")
     }
-    cur = locate(x, cur)
-    console.log(`located edge with id ${cur.id}`)
-    if (cur.odata == x || cur.ddata == x) {
+    console.log(x.toJSON())
+    loc = locate(x, loc)
+    console.log(`located edge with id ${loc.id}`)
+    if (loc.odata == x || loc.ddata == x) {
         return
     }
     // FIXME
@@ -79,32 +80,29 @@ export const insertSite = (bag: EdgeBag<Point2D>, x: Point2D) => {
     // } else {
     //     console.log(`point is not on edge`)
     // }
-    let base = bag.createEdge()
-    base.odata = cur.odata
-    base.ddata = x
-    bag.splice(cur, base)
-    const startingEdge = base
-    do {
-        // Need to check this use of connect
-        console.log("connecting")
-        base = bag.connect(cur, base.sym)
-        cur = base.oprev
-    } while (cur.lnext.id != startingEdge.id)
 
-    do {
-        const t = cur.oprev
-        if (!cur.odata || !cur.ddata || !t.odata || !t.ddata) {
-            throw new Error("No o or d data")
-        }
-        if (rightOf(t.ddata, cur) && inCircle(cur.odata, t.ddata, cur.ddata, x)) {
-            console.log("swapping")
-            bag.swap(cur)
-            cur = cur.oprev
-        } else if (cur.onext.id == startingEdge.id) {
+    const face = Array.from(loc.lorbit)
+    console.log(`got face ${face.map((e) => e.id)}`)
+    let spoke = bag.createEdge()
+    spoke.odata = x
+    const ospoke = spoke
+    bag.splice(loc, spoke.sym)
+    face.forEach((e) => {
+        if (e.id == loc.id) {
             return
-        } else {
-            console.log("continuing")
-            cur = cur.onext.lprev
         }
-    } while (true)
+        console.log(`creating spoke between ${spoke.id} and ${e.id}`)
+        spoke = bag.connect(spoke, e)
+    })
+
+    face.forEach((e) => {
+        const t = e.oprev
+        if (!t.ddata || !t.odata || !e.odata || !e.ddata) {
+            throw new Error("No data")
+        }
+        if (rightOf(t.ddata, e) && inCircle(e.odata, t.ddata, e.ddata, x)) {
+            console.log(`${x.x},${x.y} is in circle of ${e.id} and ${t.id}, swapping`)
+            bag.swap(e)
+        }
+    })
 }

@@ -4,6 +4,7 @@ export interface Point2D {
     readonly norm: number
     equals: (a: Point2D) => boolean
     minus: (a: Point2D) => Point2D
+    toJSON: () => object
 }
 
 export interface Line2D {
@@ -20,7 +21,14 @@ export const makePoint2D = (x: number, y: number): Point2D => ({
         return Math.sqrt(x * x + y * y)
     },
     equals: (p: Point2D) => x == p.x && y == p.y,
-    minus: (p: Point2D) => makePoint2D(x - p.x, y - p.y)
+    minus: (p: Point2D) => makePoint2D(x - p.x, y - p.y),
+    toJSON() {
+        return {
+            x,
+            y,
+            norm: this.norm
+        }
+    }
 })
 
 export const makeLine = (p: Point2D, q: Point2D): Line2D => {
