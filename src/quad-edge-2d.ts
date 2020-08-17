@@ -17,26 +17,26 @@ export const locate = (p: Point2D, e: Edge<Point2D>): Edge<Point2D> => {
     let cur = e
     let located = false
     while (!located) {
-        console.log(`checking locate for ${cur}`)
+        // console.log(`checking locate for ${cur}`)
         if (cur.odata == undefined || cur.ddata == undefined) {
             throw new Error("No o or d data")
         } else if (p.equals(cur.odata) || p.equals(cur.ddata)) {
             located = true
         } else if (rightOf(p, cur.odata, cur.ddata)) {
-            console.log(`${p} is to the right of cur ${cur}`)
+            // console.log(`${p} is to the right of cur ${cur}`)
             cur = cur.sym
         } else if (cur.onext.odata == undefined || cur.onext.ddata == undefined) {
             throw new Error("No o or d data")
         } else if (!rightOf(p, cur.onext.odata, cur.onext.ddata)) {
-            console.log(`${p} is not to the right of cur.onext ${cur.onext}`)
+            // console.log(`${p} is not to the right of cur.onext ${cur.onext}`)
             cur = cur.onext
         } else if (cur.dprev.odata == undefined || cur.dprev.ddata == undefined) {
             throw new Error("No o or d data")
         } else if (!rightOf(p, cur.dprev.odata, cur.dprev.ddata)) {
-            console.log(`${p} is not to the right of cur.dprev ${cur.dprev}`)
+            // console.log(`${p} is not to the right of cur.dprev ${cur.dprev}`)
             cur = cur.dprev
         } else {
-            console.log(`located ${cur}`)
+            // console.log(`located ${cur}`)
             located = true
         }
     }
@@ -53,7 +53,7 @@ export const onEdge = (p: Point2D, e: Edge<Point2D>): boolean => {
     const b = e.ddata
     const t1 = p.minus(a).norm
     const t2 = p.minus(b).norm
-    console.log({ a, b, t1, t2 })
+    // console.log({ a, b, t1, t2 })
     if (t1 < EPS || t2 < EPS) {
         return true
     }
@@ -73,7 +73,7 @@ export const isBoundaryEdge = (e: Edge<Point2D>) =>
     e.odata && isBoundaryPoint(e.odata) && e.ddata && isBoundaryPoint(e.ddata)
 
 export const insertSite = (bag: EdgeBag<Point2D>, p: Point2D) => {
-    console.log(`inserting ${p}`)
+    // console.log(`inserting ${p}`)
     let loc = bag.edge
     if (!loc.odata || !loc.ddata) {
         throw new Error("No o or d data")
@@ -94,7 +94,7 @@ export const insertSite = (bag: EdgeBag<Point2D>, p: Point2D) => {
 
     // Get the face that the point lies within
     const face = Array.from(loc.lorbit)
-    console.log(`got face ${face.map((e) => `${e}`).join(", ")}`)
+    // console.log(`got face ${face.map((e) => `${e}`).join(", ")}`)
 
     // Create the first spoke to the site
     const firstSpoke = bag.createEdge()
@@ -102,7 +102,7 @@ export const insertSite = (bag: EdgeBag<Point2D>, p: Point2D) => {
 
     let spoke = firstSpoke
     bag.splice(loc, spoke.sym)
-    console.log(`created spoke ${spoke}`)
+    // console.log(`created spoke ${spoke}`)
     face.forEach((e) => {
         if (e.id == loc.id) {
             // We've already created a spoke for this edge, it was the first one
@@ -110,34 +110,34 @@ export const insertSite = (bag: EdgeBag<Point2D>, p: Point2D) => {
         }
         // Create the next spoke
         spoke = bag.connect(spoke, e)
-        console.log(`created spoke ${spoke}`)
+        // console.log(`created spoke ${spoke}`)
     })
 
     let e
     const seen: Set<string> = new Set()
     const queue: Edge<Point2D>[] = [loc]
     while ((e = queue.shift()) != undefined) {
-        console.log(`checking delaunay for ${e}`)
+        // console.log(`checking delaunay for ${e}`)
         if (seen.has(e.id)) {
-            console.log(`have seen ${e}`)
+            // console.log(`have seen ${e}`)
             continue
         }
         const t = e.oprev
         if (!t.ddata || !t.odata || !e.odata || !e.ddata) {
             throw new Error("No data")
         } else if (rightOf(t.ddata, e.odata, e.ddata) && inCircle(e.odata, t.ddata, e.ddata, p)) {
-            console.log(`${p} is in circle of ${e} and ${t}`)
+            // console.log(`${p} is in circle of ${e} and ${t}`)
             if (!isBoundaryEdge(e)) {
-                console.log(`swapping ${e.id}`)
+                // console.log(`swapping ${e.id}`)
                 bag.swap(e)
             } else {
-                console.log(`not swapping ${e.id}`)
+                // console.log(`not swapping ${e.id}`)
             }
             if (!seen.has(e.oprev.id)) {
                 queue.push(e.oprev)
             }
         } else {
-            console.log(`popping an edge`)
+            // console.log(`popping an edge`)
             if (!seen.has(e.onext.lprev.id)) {
                 queue.push(e.onext.lprev)
             }

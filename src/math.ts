@@ -6,6 +6,8 @@ export type Matrix3x3 = [[number, number, number], [number, number, number], [nu
 export const determinant3x3 = ([[a, b, c], [d, e, f], [g, h, i]]: Matrix3x3) =>
     a * e * i + b * f * g + c * d * h - g * e * c - h * f * a - i * d * b
 
+// I don't know if this is safe w/r/t the ccw and inCircle calculations we're doing. I haven't seen any issues in my
+// manual testing
 const translateInf = (x: number) => {
     switch (x) {
         case -Infinity:
@@ -20,7 +22,7 @@ const translateInf = (x: number) => {
 /**
  * Note, this assumes the points lie on the euclidean plane with the y-axis pointing "down"
  */
-export const ccw = (a: Point2D, b: Point2D, c: Point2D): boolean => {
+export const ccw2 = (a: Point2D, b: Point2D, c: Point2D): boolean => {
     const a_x = makePoly(a.x)
     const a_y = makePoly(a.y)
     const b_x = makePoly(b.x)
@@ -31,8 +33,12 @@ export const ccw = (a: Point2D, b: Point2D, c: Point2D): boolean => {
     return comp(det, [1]) == -1
 }
 
-export const ccw2 = (a: Point2D, b: Point2D, c: Point2D): boolean => {
-    return true
+export const ccw = (a: Point2D, b: Point2D, c: Point2D): boolean => {
+    return (
+        (translateInf(b.x) - translateInf(a.x)) * (translateInf(c.y) - translateInf(a.y)) -
+            (translateInf(c.x) - translateInf(a.x)) * (translateInf(b.y) - translateInf(a.y)) <
+        0
+    )
 }
 
 /**
