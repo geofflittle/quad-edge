@@ -22,12 +22,13 @@ export interface Edge<T> {
     readonly olorbit: Iterable<Edge<T>>
     readonly drorbit: Iterable<Edge<T>>
     toJSON: () => object
+    toString: () => string
 }
 
 const makeOrbitIterable = <T>(e: Edge<T>, fn: (e: Edge<T>) => Edge<T>[]): Iterable<Edge<T>> => {
-    const seen = new Set<string>()
-    const queue = [e]
     let cur
+    const queue = [e]
+    const seen = new Set<string>()
     return {
         [Symbol.iterator](): Iterator<Edge<T>> {
             return {
@@ -119,9 +120,9 @@ export const makeToEdge = <T>(
                 id: this.id,
                 odata: this.odata,
                 ddata: this.ddata,
-                rot: this.rot.id,
+                // rot: this.rot.id,
                 sym: this.sym.id,
-                invrot: this.invrot.id,
+                // invrot: this.invrot.id,
                 onext: this.onext.id,
                 oprev: this.oprev.id,
                 dnext: this.dnext.id,
@@ -131,6 +132,9 @@ export const makeToEdge = <T>(
                 rnext: this.rnext.id,
                 rprev: this.rprev.id
             }
+        },
+        toString() {
+            return `${this.id} [from ${this.odata} to ${this.ddata}]`
         }
     })
     return toEdge

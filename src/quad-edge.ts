@@ -50,6 +50,7 @@ const makeCreateEdge = <T>(
 }
 
 const makeSplice = <T>(updateEdgeRecord: UpdateEdgeRecord<T>): Splice<T> => (a: Edge<T>, b: Edge<T>) => {
+    // console.log(`splicing ${a} and ${b}`)
     const alpha = a.onext.rot
     const beta = b.onext.rot
     const t1 = b.onext
@@ -112,12 +113,13 @@ const makeAddPolygon = <T>(createEdge: CreateEdge<T>, addEdge: AddEdge<T>, conne
 }
 
 const makeSwap = <T>(splice: Splice<T>): Swap<T> => (e: Edge<T>) => {
+    console.log(`swapping ${e}`)
     const a = e.oprev
     const b = e.sym.oprev
-    splice(e, a)
-    splice(e.sym, b)
-    splice(e, a.lnext)
-    splice(e.sym, b.lnext)
+    splice(a, e)
+    splice(b, e.sym)
+    splice(a.lnext, e)
+    splice(b.lnext, e.sym)
 }
 
 const toAlpha = (n: number): string =>

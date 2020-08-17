@@ -1,7 +1,7 @@
 import { EdgeBag, makeEdgeBag } from "../src/quad-edge"
 import { Point2D, makePoint2D } from "../src/two-d"
 import { getCircle, inCircle } from "../src/math"
-import { insertSite, locate } from "../src/quad-edge-2d"
+import { insertSite, isBoundaryEdge, isBoundaryPoint, locate } from "../src/quad-edge-2d"
 import { line, strokeCircle, text } from "./canvas-utils"
 
 import { Edge } from "../src/edge"
@@ -19,6 +19,10 @@ interface Sketch {
     edgeBag: EdgeBag<Point2D>
 }
 
+const colors = ["green", "blue", "orange", "yellow"]
+
+const isDrawable = (e: Edge<Point2D>): boolean => !isBoundaryPoint(e.odata) && !isBoundaryPoint(e.ddata)
+
 const makeFrameReqCallback = (sketch: Sketch): FrameRequestCallback => {
     const frameReqCallback = (time: number) => {
         sketch.context.fillStyle = "white"
@@ -26,10 +30,41 @@ const makeFrameReqCallback = (sketch: Sketch): FrameRequestCallback => {
 
         const edges = sketch.edgeBag.edges.filter((edge) => edge.odata != undefined)
 
-        edges.forEach((edge) => {
-            console.log(edge.toJSON())
-            line(sketch.context, edge.odata, edge.ddata, 3, "black", edge.id)
+        edges.forEach((e) => {
+            // console.log(e.toJSON())
+            if (!isDrawable(e)) {
+                return
+            }
+            line(sketch.context, e.odata, e.ddata, 1, "red")
         })
+
+        const seen: Set<string> = new Set()
+        const faces: Edge<Point2D>[][] = []
+        for (let e of edges) {
+            if (seen.has(e.id) || isBoundaryEdge(e)) {
+                continue
+            }
+            const lorbit = Array.from(e.lorbit)
+            if (!lorbit.every((fe) => isDrawable(fe))) {
+                continue
+            }
+            faces.push(lorbit)
+            lorbit.forEach((fe) => seen.add(fe.id))
+        }
+
+        for (let i = 0; i < faces.length; i++) {
+            const face = faces[i]
+            const a = face[0]
+            const b = a.lnext
+            const c = b.lnext
+            const [center, r] = getCircle(a.odata, b.odata, c.odata)
+
+            // if (sketch.mouse.loc != undefined && inCircle(a.odata, b.odata, c.odata, sketch.mouse.loc)) {
+            //     strokeCircle(sketch.context, center, r, 3, "green")
+            // } else {
+            // strokeCircle(sketch.context, center, r, 1, colors[i % colors.length])
+            // }
+        }
 
         // window.requestAnimationFrame(frameReqCallback)
     }
@@ -86,19 +121,25 @@ window.onload = () => {
 
     sketch.edgeBag = makeEdgeBag<Point2D>()
 
-    const a = sketch.edgeBag.addPolygon(4)
-    const b = a.lnext
-    const c = b.lnext
-    const d = c.lnext
-    a.odata = makePoint2D(-Infinity, -Infinity)
-    b.odata = makePoint2D(-Infinity, Infinity)
-    c.odata = makePoint2D(Infinity, Infinity)
-    d.odata = makePoint2D(Infinity, -Infinity)
+    const left = sketch.edgeBag.addPolygon(3)
+    const cross = left.lnext
+    const top = cross.lnext
+    left.odata = makePoint2D(-Infinity, -Infinity)
+    cross.odata = makePoint2D(0, Infinity)
+    top.odata = makePoint2D(Infinity, 0)
 
-    insertSite(sketch.edgeBag, makePoint2D(100, 100))
-    // insertSite(sketch.edgeBag, makePoint2D(100, 600))
-    // insertSite(sketch.edgeBag, makePoint2D(600, 300))
-    // insertSite(sketch.edgeBag, makePoint2D(600, 500))
+    for (let i = 0; i < 10; i++) {
+        insertSite(sketch.edgeBag, makePoint2D(Math.floor(Math.random() * 800), Math.floor(Math.random() * 800)))
+    }
+
+    // const a = makePoint2D(720, 740)
+    // const b = makePoint2D(330, 410)
+    // const c = makePoint2D(110, 410)
+    // const d = makePoint2D(400, 190)
+    // const sites = [a, b, c, d]
+    // sites.forEach((site) => {
+    //     insertSite(sketch.edgeBag, site)
+    // })
 
     window.requestAnimationFrame(makeFrameReqCallback(sketch))
 }

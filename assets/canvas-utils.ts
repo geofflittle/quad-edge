@@ -12,6 +12,17 @@ export const text = (
     ctx.fillText(value, a.x, a.y)
 }
 
+const translateInf = (x: number) => {
+    switch (x) {
+        case -Infinity:
+            return Number.MIN_SAFE_INTEGER
+        case Infinity:
+            return Number.MAX_SAFE_INTEGER
+        default:
+            return x
+    }
+}
+
 export const line = (
     ctx: CanvasRenderingContext2D,
     a: Point2D,
@@ -21,8 +32,8 @@ export const line = (
     label?: string
 ) => {
     ctx.beginPath()
-    ctx.moveTo(a.x, a.y)
-    ctx.lineTo(b.x, b.y)
+    ctx.moveTo(translateInf(a.x), translateInf(a.y))
+    ctx.lineTo(translateInf(b.x), translateInf(b.y))
     ctx.lineWidth = lineWidth
     ctx.strokeStyle = strokeStyle
     ctx.stroke()
@@ -33,7 +44,7 @@ export const line = (
         ctx.textAlign = "center"
         ctx.translate(a.x + dx / 2, a.y + dy / 2)
         ctx.rotate(Math.atan2(dy, dx))
-        text(ctx, strokeStyle, "bold 30px Courier New", label, makePoint2D(0, -10))
+        text(ctx, strokeStyle, "bold 10px Courier New", label, makePoint2D(0, -10))
         ctx.restore()
     }
 }
